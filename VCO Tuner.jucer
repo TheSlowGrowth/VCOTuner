@@ -150,6 +150,8 @@
           file="Source/ReportPrepScreen.cpp"/>
     <FILE id="eJNHhS" name="ReportPrepScreen.h" compile="0" resource="0"
           file="Source/ReportPrepScreen.h"/>
+    <FILE id="fjkeKS" name="ReportProperties.cpp" compile="1" resource="0"
+          file="Source/ReportProperties.cpp"/>
     <FILE id="KWo9QS" name="ReportProperties.h" compile="0" resource="0"
           file="Source/ReportProperties.h"/>
     <FILE id="nehnGjkrX" name="Startup.cpp" compile="1" resource="0" file="Source/Startup.cpp"/>

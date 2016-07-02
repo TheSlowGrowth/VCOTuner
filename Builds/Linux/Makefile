@@ -55,6 +55,7 @@ OBJECTS := \
   $(OBJDIR)/ReportDetailsEditorScreen_acef9ba8.o \
   $(OBJDIR)/ReportDisplayScreen_35c5bc5b.o \
   $(OBJDIR)/ReportPrepScreen_97d33156.o \
+  $(OBJDIR)/ReportProperties_6591d890.o \
   $(OBJDIR)/Startup_ceda0c5e.o \
   $(OBJDIR)/VCOTuner_fcfd77c1.o \
   $(OBJDIR)/Visualizer_c8686f67.o \
@@ -118,6 +119,11 @@ $(OBJDIR)/ReportDisplayScreen_35c5bc5b.o: ../../Source/ReportDisplayScreen.cpp
 $(OBJDIR)/ReportPrepScreen_97d33156.o: ../../Source/ReportPrepScreen.cpp
 	-@mkdir -p $(OBJDIR)
 	@echo "Compiling ReportPrepScreen.cpp"
+	@$(CXX) $(CXXFLAGS) -o "$@" -c "$<"
+
+$(OBJDIR)/ReportProperties_6591d890.o: ../../Source/ReportProperties.cpp
+	-@mkdir -p $(OBJDIR)
+	@echo "Compiling ReportProperties.cpp"
 	@$(CXX) $(CXXFLAGS) -o "$@" -c "$<"
 
 $(OBJDIR)/Startup_ceda0c5e.o: ../../Source/Startup.cpp

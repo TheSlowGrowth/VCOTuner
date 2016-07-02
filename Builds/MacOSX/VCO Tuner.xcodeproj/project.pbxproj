@@ -26,6 +26,7 @@
 		392A39581E12792B2783DF29 = {isa = PBXBuildFile; fileRef = 0ECC67720712DA5C648CBCD2; };
 		DFCDB3982F164547590ACFF9 = {isa = PBXBuildFile; fileRef = 1048368B676759E50AE658F1; };
 		2AAD914FFE704A3ECE563D58 = {isa = PBXBuildFile; fileRef = 9432FE486B3AA22D645C8B4B; };
+		CFC2942F84652E627593CB7D = {isa = PBXBuildFile; fileRef = 5A79C33959205B941696E57E; };
 		2946480E0051817F7F8C2A8D = {isa = PBXBuildFile; fileRef = C0B943B37166EE6AE884BD09; };
 		311D454D0A0FF5366187CEE1 = {isa = PBXBuildFile; fileRef = FE7CCC33D0FC6AD442627D02; };
 		A64D9253E93C6B64F10AF5B8 = {isa = PBXBuildFile; fileRef = 1694EC1B42AC2CCF819373C9; };
@@ -487,6 +488,7 @@
 		59F318E1076894368DF63E20 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "juce_SelectedItemSet.h"; path = "../../JuceLibraryCode/modules/juce_gui_basics/mouse/juce_SelectedItemSet.h"; sourceTree = "SOURCE_ROOT"; };
 		5A4035C7E4F8FAB611C6A7BE = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "juce_FileLogger.h"; path = "../../JuceLibraryCode/modules/juce_core/logging/juce_FileLogger.h"; sourceTree = "SOURCE_ROOT"; };
 		5A78DE4557AB87783CD9B09A = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = pngstruct.h; path = "../../JuceLibraryCode/modules/juce_graphics/image_formats/pnglib/pngstruct.h"; sourceTree = "SOURCE_ROOT"; };
+		5A79C33959205B941696E57E = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ReportProperties.cpp; path = ../../Source/ReportProperties.cpp; sourceTree = "SOURCE_ROOT"; };
 		5A802C86E19511FF3E9D069B = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = fixed.h; path = "../../JuceLibraryCode/modules/juce_audio_formats/codecs/flac/libFLAC/include/private/fixed.h"; sourceTree = "SOURCE_ROOT"; };
 		5AEF169983816354757299FC = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "juce_PopupMenu.h"; path = "../../JuceLibraryCode/modules/juce_gui_basics/menus/juce_PopupMenu.h"; sourceTree = "SOURCE_ROOT"; };
 		5AF0CA7CDFCA90B4DE1F55C3 = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMIDI.framework; path = System/Library/Frameworks/CoreMIDI.framework; sourceTree = SDKROOT; };
@@ -1271,6 +1273,7 @@
 					134FB3154CBD49CEE3538585,
 					9432FE486B3AA22D645C8B4B,
 					22436B06526E2E515545E8FB,
+					5A79C33959205B941696E57E,
 					01E77D6EE008AD0DA185C44F,
 					C0B943B37166EE6AE884BD09,
 					FE7CCC33D0FC6AD442627D02,
@@ -2812,6 +2815,7 @@
 					392A39581E12792B2783DF29,
 					DFCDB3982F164547590ACFF9,
 					2AAD914FFE704A3ECE563D58,
+					CFC2942F84652E627593CB7D,
 					2946480E0051817F7F8C2A8D,
 					311D454D0A0FF5366187CEE1,
 					A64D9253E93C6B64F10AF5B8,

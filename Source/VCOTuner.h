@@ -80,7 +80,7 @@ public:
     public:
         virtual ~Listener() {}
         
-        virtual void newMeasurementReady(const measurement_t& m) {}
+        virtual void newMeasurementReady(const measurement_t& /*m*/) {}
         virtual void tunerStarted() {}
         virtual void tunerStopped() {}
         virtual void tunerFinished() {}

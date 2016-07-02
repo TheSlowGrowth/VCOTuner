@@ -62,7 +62,7 @@ void ReportPrepScreen::paint(Graphics& g)
     
     double lineSpacing = box.getWidth() / 12;
     g.setColour(Colours::lightgreen.withAlpha(0.5f));
-    g.fillRect(Rectangle<int>(box.getCentreX() - lineSpacing, box.getY(), 2*lineSpacing, box.getHeight()));
+    g.fillRect(Rectangle<int>(box.getCentreX() - (int)lineSpacing, box.getY(), (int)(2.0*lineSpacing), box.getHeight()));
 
     for (int i = -6; i < 7; i++)
     {
@@ -77,12 +77,12 @@ void ReportPrepScreen::paint(Graphics& g)
             g.setColour(Colours::black.withAlpha(0.25f));
             spacing = 6;
         }
-        g.drawLine(box.getCentreX() + i*lineSpacing, box.getY() + spacing, box.getCentreX() + i*lineSpacing, box.getBottom() - spacing);
+        g.drawLine(box.getCentreX() + (int)(i*lineSpacing), box.getY() + spacing, box.getCentreX() + (int)(i*lineSpacing), box.getBottom() - spacing);
     }
     
     double frequencyOffset = currentFreq - ReportProperties::desiredAdjustmentFrequency;
     double halfBoxRange = ReportProperties::allowedDeviation * 6;
-    double positionInBox = frequencyOffset / halfBoxRange;
+    float positionInBox = (float) (frequencyOffset / halfBoxRange);
     if (positionInBox > 1.0)
     {
         g.setColour(Colours::red);
@@ -96,7 +96,7 @@ void ReportPrepScreen::paint(Graphics& g)
     else
     {
         g.setColour(Colours::red);
-        g.drawLine(box.getCentreX() + positionInBox * box.getWidth()/2, box.getY(), box.getCentreX() + positionInBox * box.getWidth()/2, box.getBottom());
+        g.drawLine(box.getCentreX() + (int) positionInBox * box.getWidth()/2, box.getY(), box.getCentreX() + (int) positionInBox * box.getWidth()/2, box.getBottom());
     }
     
     g.setColour(Colours::black);

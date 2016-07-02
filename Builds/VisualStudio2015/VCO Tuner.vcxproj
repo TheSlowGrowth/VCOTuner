@@ -135,6 +135,7 @@
     <ClCompile Include="..\..\Source\ReportDetailsEditorScreen.cpp"/>
     <ClCompile Include="..\..\Source\ReportDisplayScreen.cpp"/>
     <ClCompile Include="..\..\Source\ReportPrepScreen.cpp"/>
+    <ClCompile Include="..\..\Source\ReportProperties.cpp"/>
     <ClCompile Include="..\..\Source\Startup.cpp"/>
     <ClCompile Include="..\..\Source\VCOTuner.cpp"/>
     <ClCompile Include="..\..\Source\Visualizer.cpp"/>

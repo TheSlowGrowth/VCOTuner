@@ -382,6 +382,9 @@
     <ClCompile Include="..\..\Source\ReportPrepScreen.cpp">
       <Filter>VCO Tuner</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\ReportProperties.cpp">
+      <Filter>VCO Tuner</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Startup.cpp">
       <Filter>VCO Tuner</Filter>
     </ClCompile>

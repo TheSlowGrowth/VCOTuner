@@ -23,8 +23,8 @@ public:
     // before a report is made, the oscillator pitch is tuned so that it matches the common tuning
     // (midi note 69 (== A) should match 440Hz)
     static const int adjustmentPitch = 69;
-    constexpr static const double desiredAdjustmentFrequency = 440.0;
-    constexpr static const double allowedDeviation = 1.0;
+    static const double desiredAdjustmentFrequency;
+    static const double allowedDeviation;
     static const int requiredHoldTimeInMs = 4000;
 };
 
