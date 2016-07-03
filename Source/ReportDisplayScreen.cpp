@@ -114,7 +114,8 @@ void ReportDisplayScreen::drawReport()
     leftColumnContent.translate(0, lineHeight);
     
     g.drawText("Notes:", rightColumnLabels, Justification::topLeft);
-    g.drawText(notes, rightColumnContent.withHeight(lineHeight + contentHeight), Justification::topLeft);
+    Rectangle<int> noteArea = rightColumnContent.withHeight(lineHeight + contentHeight);
+    g.drawMultiLineText(notes, noteArea.getX(), noteArea.getY() + g.getCurrentFont().getHeight(), noteArea.getWidth());
     
     g.saveState();
     int bottom = jmax(leftColumnLabels.getBottom(), leftColumnContent.getBottom(),

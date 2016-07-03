@@ -79,6 +79,7 @@ ReportDetailsEditorScreen::ReportDetailsEditorScreen(VCOTuner* t, Visualizer* v,
     
     notesEdit.setName("NotesEdit");
     notesEdit.setMultiLine(true);
+    notesEdit.setReturnKeyStartsNewLine(true);
     notesEdit.setText(getAppProperties().getUserSettings()->getValue("Notes"), dontSendNotification);
     if (notesEdit.getText() == "")
         notesEdit.setText(" - ", dontSendNotification);
