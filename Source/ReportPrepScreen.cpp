@@ -96,7 +96,7 @@ void ReportPrepScreen::paint(Graphics& g)
     else
     {
         g.setColour(Colours::red);
-        g.drawLine(box.getCentreX() + (int) positionInBox * box.getWidth()/2, box.getY(), box.getCentreX() + (int) positionInBox * box.getWidth()/2, box.getBottom());
+        g.drawLine(box.getCentreX() + (int) (positionInBox * box.getWidth()/2), box.getY(), box.getCentreX() + (int) (positionInBox * box.getWidth()/2), box.getBottom());
     }
     
     g.setColour(Colours::black);
