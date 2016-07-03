@@ -130,6 +130,15 @@ void MainComponent::buttonClicked (Button* bttn)
         showAudioSettings();
     else if (bttn == &startStop)
     {
+        // re-apply the currently selected settings on a start.
+        // this prevents the VCOTuner and the comboboxes being out of
+        // sync after a report (when report is finished, the settings from the
+        // report remain active but the comboboxes still show the old value)
+        if (!tuner.isRunning())
+        {
+            comboBoxChanged(&regime);
+            comboBoxChanged(&resolution);
+        }
         tuner.toggleState();
         if (tuner.isRunning())
         {
