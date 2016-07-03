@@ -354,9 +354,9 @@ const char* MainComponent::regimeTexts[numRegimes] = {
     "huge > fine (24-96, +1)",
 };
 
-const int MainComponent::resolutions[numResolutions] = {10, 50, 100, 200, 400};
+const int MainComponent::resolutions[numResolutions] = {20, 50, 100, 200, 400};
 const char* MainComponent::resolutionsTexts[numResolutions] = {
-    "10 - quick & dirty",
+    "20 - quick & dirty",
     "50 - not quite enough",
     "100 - okay",
     "200 - neat and tidy",
