@@ -30,6 +30,9 @@ public:
 private:
     /** holds the list of completed measurements */
     Array<VCOTuner::measurement_t> measurements;
+    
+    float heightForFlipping;
+    float yFlip(float y);
 };
 
 

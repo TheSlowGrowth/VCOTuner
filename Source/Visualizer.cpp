@@ -58,6 +58,9 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
         return;
     }
     
+    // prepare coordinate transformation (flipping the y axis)
+    heightForFlipping = (float) height;
+    
     const float sidebarWidth = 75;
     double columnWidth = (double) (width - sidebarWidth) / (double) measurements.size();
     const double allowedPitchOffset = 0.02; // 5 cents allowed
@@ -76,11 +79,11 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
     g.setColour(Colours::grey);
     const float dashLengths[] = {4, 4};
     double position = (allowedPitchOffset - min) * vertScaling;
-    g.drawDashedLine(Line<float>(sidebarWidth, (float) position, (float) width, (float) position), dashLengths, 2);
+    g.drawDashedLine(Line<float>(sidebarWidth, yFlip((float) position), (float) width, yFlip((float) position)), dashLengths, 2);
     position = (-allowedPitchOffset - min) * vertScaling;
-    g.drawDashedLine(Line<float>(sidebarWidth, (float) position, (float) width, (float) position), dashLengths, 2);
+    g.drawDashedLine(Line<float>(sidebarWidth, yFlip((float) position), (float) width, yFlip((float) position)), dashLengths, 2);
     position = (- min) * vertScaling;
-    g.drawLine(sidebarWidth, (float) position, (float) width, (float) position);
+    g.drawLine(sidebarWidth, yFlip((float) position), (float) width, yFlip((float) position));
     
     // draw scales
     g.setColour(Colours::grey);
@@ -109,14 +112,14 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
         String lineText = numberString;
         if (!useSemitoneTexts)
             lineText += " cents";
-        g.drawText(lineText, 0, (int) position - 8, (int) left-4, 16, Justification::centredRight);
+        g.drawText(lineText, 0, (int) yFlip(position + g.getCurrentFont().getHeight()/2), (int) left-4, g.getCurrentFont().getHeight(), Justification::centredRight);
         
         // don't overwrite maximum "in-tune" lines
         if (y*lineInterval == allowedPitchOffset || y*lineInterval == -allowedPitchOffset)
             continue;
         
         const float dashLengths[] = {4, 20};
-        g.drawDashedLine(Line<float>((float) left, (float) position, (float) width, (float) position), dashLengths, 2);
+        g.drawDashedLine(Line<float>((float) left, yFlip((float) position), (float) width, yFlip((float) position)), dashLengths, 2);
         
     }
     
@@ -130,20 +133,23 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
         float minPosition = (float) ((measurements[i].pitchOffset - measurements[i].pitchDeviation - min) * vertScaling);
         
         g.setColour(Colours::springgreen.withAlpha(0.4f));
-        g.fillRect(left, minPosition, (float) columnWidth, maxPosition - minPosition);
+        g.fillRect(left, yFlip(maxPosition), (float) columnWidth, maxPosition - minPosition);
         
         // draw average value
         float position = (float) ((measurements[i].pitchOffset - min) * vertScaling);
-
-        
         g.setColour(Colours::green);
-        g.drawLine(left, position, left + (float) columnWidth, position);
+        g.drawLine(left, yFlip(position), left + (float) columnWidth, yFlip(position));
     }
 }
 
 void Visualizer::paint(Graphics& g)
 {
     paint(g, getWidth(), getHeight());
+}
+
+float Visualizer::yFlip(float y)
+{
+    return heightForFlipping - y;
 }
 
 void Visualizer::newMeasurementReady(const VCOTuner::measurement_t& m)
