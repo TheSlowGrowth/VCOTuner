@@ -48,6 +48,9 @@ void ReportDisplayScreen::buttonClicked (Button* bttn)
         FileChooser fileChooser("Save report ... ", File::nonexistent, "*.png");
         if (fileChooser.browseForFileToSave(true))
         {
+            if (fileChooser.getResult().existsAsFile())
+                fileChooser.getResult().deleteFile();
+            
             FileOutputStream stream(fileChooser.getResult());
             PNGImageFormat format;
             if (!format.writeImageToStream(img, stream))
