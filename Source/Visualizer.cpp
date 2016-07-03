@@ -22,7 +22,8 @@ Visualizer::~Visualizer()
     
 }
 
-void Visualizer::paint(Graphics& g, int width, int height)
+
+void Visualizer::paint(juce::Graphics &g, int width, int height)
 {
     if (measurements.size() == 0)
     {
@@ -30,14 +31,9 @@ void Visualizer::paint(Graphics& g, int width, int height)
         return;
     }
     
-    const float sidebarWidth = 75;
-    double columnWidth = (double) (width - sidebarWidth) / (double) measurements.size();
-    const double allowedPitchOffset = 0.02; // 5 cents allowed
-    //bool displayDeviation = columnWidth > 5; // larger than 5 pixels
-    
     // calculate display range
-    double max = allowedPitchOffset;
-    double min = -allowedPitchOffset;
+    double max = 0;
+    double min = 0;
     for (int i = 0; i < measurements.size(); i++)
     {
         double value = measurements[i].pitchOffset;
@@ -50,6 +46,29 @@ void Visualizer::paint(Graphics& g, int width, int height)
     double expandAmount = (max - min) * 0.2;
     min -= expandAmount;
     max += expandAmount;
+    
+    paintWithFixedScaling(g, width, height, min, max);
+}
+
+void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, double min, double max)
+{
+    if (measurements.size() == 0)
+    {
+        g.drawText("No Data", 0, 0, width, height, juce::Justification::centred);
+        return;
+    }
+    
+    const float sidebarWidth = 75;
+    double columnWidth = (double) (width - sidebarWidth) / (double) measurements.size();
+    const double allowedPitchOffset = 0.02; // 5 cents allowed
+    //bool displayDeviation = columnWidth > 5; // larger than 5 pixels
+    
+    if (min > -allowedPitchOffset)
+        min = -allowedPitchOffset;
+    if (max < allowedPitchOffset)
+        max = allowedPitchOffset;
+    if (max < min)
+        return;
     
     double vertScaling = (double) height / (max - min);
     
@@ -79,7 +98,7 @@ void Visualizer::paint(Graphics& g, int width, int height)
     }
     bool useSemitoneTexts = lineInterval >= 1.0;
     
-    int numPosLines = (int) trunc(max/lineInterval);
+    int numPosLines = (int) trunc(max/lineInterval) + 1;
     int numNegLines = (int) trunc(-min/lineInterval);
     for (double y = numPosLines; y > -numNegLines; y--)
     {

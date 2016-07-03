@@ -119,6 +119,6 @@ void ReportDisplayScreen::drawReport()
     Rectangle<int> graphArea(10, bottom + 10, img.getWidth() - 20, img.getHeight() - 10 - bottom - 10);
     g.reduceClipRegion(graphArea);
     g.setOrigin(graphArea.getTopLeft());
-    visualizer->paint(g, graphArea.getWidth(), graphArea.getHeight());
+    visualizer->paintWithFixedScaling(g, graphArea.getWidth(), graphArea.getHeight(), -0.15, 0.15);
     g.restoreState();
 }

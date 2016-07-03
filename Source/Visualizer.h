@@ -20,6 +20,7 @@ public:
     Visualizer();
     ~Visualizer();
     
+    void paintWithFixedScaling(Graphics& g, int width, int height, double min, double max);
     void paint(Graphics& g, int width, int height);
     virtual void paint(Graphics& g);
     
