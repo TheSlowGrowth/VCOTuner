@@ -68,6 +68,30 @@ void VCOTuner::toggleState()
     }
 }
 
+void VCOTuner::start()
+{
+    if (!isRunning())
+        switchState(prepRefMeasurement);
+}
+
+void VCOTuner::stop()
+{
+    if (isRunning())
+        switchState(stopped);
+}
+
+void VCOTuner::startSingleMeasurement(int pitch)
+{
+    if (state != stopped && state != finished)
+        switchState(stopped);
+    
+    singleMeasurementPitch = pitch;
+    trySendMidiNoteOn(singleMeasurementPitch);
+    singleMeasurementResult = -1;
+    
+    switchState(singleMeasurement);
+}
+
 StringArray VCOTuner::getLastErrors()
 {
     StringArray tmp = errors;
@@ -266,6 +290,7 @@ void VCOTuner::timerCallback()
             trySendMidiNoteOn(continuousFrequencyMeasurementPitch);
             startMeasurement = true;
             switchState(continuousFrequencyMeasurement);
+            cycleCounter++;
         } break;
         case continuousFrequencyMeasurement:
         {
@@ -298,6 +323,85 @@ void VCOTuner::timerCallback()
                 // restart measurement
                 startMeasurement = true;
             }
+            cycleCounter++;
+        } break;
+        case prepareSingleMeasurement:
+        {
+            // wait for low level state machine to stop measuring
+            if (stopMeasurement)
+                break;
+            
+            if (cycleCounter == 0)
+            {
+                // send midi note
+                trySendMidiNoteOn(singleMeasurementPitch);
+            }
+            else
+            {
+                // after 100ms, we expect the oscillator to be settled at the new pitch
+                // (gives some safety margin for audio/midi interface latency)
+                if (cycleCounter >= 10)
+                {
+                    // start a measurement and see if we get a stable pitch here
+                    startMeasurement = true;
+                    switchState(singleMeasurement);
+                    break;
+                }
+            }
+            cycleCounter++;
+        } break;
+        case singleMeasurement:
+        {
+            // measurement done
+            if (!startMeasurement)
+            {
+                // send note off
+                trySendMidiNoteOff(singleMeasurementPitch);
+                
+                if (lError == notStable)
+                {
+                    errors.add("The pitch on the audio input is not stable. This can be due to excessive jitter or a frequency modulation on the oscillator. Please note that the recognition only works for 'simple' waveforms with two zero-crossings per cycle. Please choose Saw, Triangle, Sine, Pulse, etc.");
+                    switchState(stopped);
+                }
+                else
+                {
+                    // calculate frequency
+                    int numMeasurements = periodLengthsHead - indexOfFirstValidPeriodLength;
+                    int accumulator = 0;
+                    for (int i = indexOfFirstValidPeriodLength; i < periodLengthsHead; i++)
+                        accumulator += periodLengths[i];
+                    
+                    double averagePeriod = (double) accumulator / (double) numMeasurements;
+                    
+                    double frequency = sampleRate / averagePeriod;
+                    
+                    // estimate deviation of frequency
+                    double fAccumulator = 0;
+                    for (int i = indexOfFirstValidPeriodLength; i < periodLengthsHead; i++)
+                    {
+                        double f = sampleRate / (double) periodLengths[i];
+                        fAccumulator += pow(f - frequency, 2);
+                    }
+                    fAccumulator = fAccumulator / (numMeasurements - 1);
+                    double fDeviation = sqrt(fAccumulator);
+                    
+                    singleMeasurementResult = frequency;
+                    singleMeasurementDeviation = fDeviation;
+                    
+                    switchState(finished);
+                    break;
+                }
+            }
+            
+            // timeout handling
+            if (cycleCounter > 1000)
+            {
+                errors.add("The incoming audio signal does not seem to contain any zero-crossings. Are you sure the oscillator signal is getting through to us? Check your audio device settings.");
+                stopMeasurement = true;
+                switchState(stopped);
+                break;
+            }
+            cycleCounter++;
         } break;
         default:
             state = stopped;
@@ -308,7 +412,7 @@ void VCOTuner::timerCallback()
 void VCOTuner::startContinuousMeasurement(int pitch)
 {
     continuousFrequencyMeasurementPitch = pitch;
-    if (state != stopped)
+    if (state != stopped && state != finished)
         switchState(stopped);
     state = prepareContinuousFrequencyMeasurement;
 }

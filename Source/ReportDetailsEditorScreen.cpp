@@ -101,13 +101,13 @@ ReportDetailsEditorScreen::ReportDetailsEditorScreen(VCOTuner* t, Visualizer* v,
     
     visualizer->clearCache();
     
+    state = measuring;
     tuner->addListener(this);
     tuner->setNumMeasurementRange(ReportProperties::lowestPitch,
                                   ReportProperties::pitchIncrement,
                                   ReportProperties::highestPitch);
-    //tuner->setNumMeasurementRange(57, 12, 81),
     tuner->setResolution(ReportProperties::numPeriods);
-    tuner->toggleState();
+    tuner->start();
     
 }
 
@@ -192,20 +192,72 @@ void ReportDetailsEditorScreen::paint(Graphics& g)
 
 void ReportDetailsEditorScreen::tunerStopped()
 {
-    // only called on an error
-    tuner->removeListener(this);
-    
+    // this is only called on an error
     if (DialogWindow* dw = findParentComponentOfClass<DialogWindow>())
         dw->exitModalState (1);
 }
 
 void ReportDetailsEditorScreen::tunerFinished()
 {
-    tuner->removeListener(this);
-    
-    tunerHasFinished = true;
-    if (submitted)
-        parent->next();
+    switch (state)
+    {
+        case measuring:
+            // measure the reference frequency once more
+            state = reMeasuringReference;
+            tuner->startSingleMeasurement(tuner->getReferencePitch());
+            return;
+            break;
+        case reMeasuringReference:
+            double initalReferenceFreq = tuner->getReferenceFrequency();
+            double reMeasuredFreq = tuner->getSingleMeasurementResult();
+            double pitchDrift = 12.0 * log(reMeasuredFreq / initalReferenceFreq) / log(2.0) - 12.0;
+            
+            if (std::abs(pitchDrift) > ReportProperties::desiredDriftMargin)
+            {
+                String driftString;
+                if (std::abs(pitchDrift) >= 1)
+                    driftString = String(pitchDrift, 2) + " semitones";
+                else
+                    driftString = String(pitchDrift * 100, 1) + " cents";
+                int result = AlertWindow::showYesNoCancelBox(AlertWindow::AlertIconType::WarningIcon, "Warning: High drift!", String("Apparently the reference pitch has drifted by ") + driftString + " during the measurement. This can happen when the oscillator is not properly heated up yet, or when someone touched the tuning controls by accident. " + newLine + newLine + "Do you want to repeat the measurement?", "Repeat", "Keep the poor results", "Cancel", nullptr, nullptr);
+                
+                switch(result)
+                {
+                    // abort
+                    case 0:
+                        if (DialogWindow* dw = findParentComponentOfClass<DialogWindow>())
+                            dw->exitModalState (1);
+                        break;
+                    // Repeat
+                    case 1:
+                        state = measuring;
+                        tuner->setNumMeasurementRange(ReportProperties::lowestPitch,
+                                                      ReportProperties::pitchIncrement,
+                                                      ReportProperties::highestPitch);
+                        tuner->setResolution(ReportProperties::numPeriods);
+                        tuner->start();
+                        break;
+                    // keep existing
+                    case 2:
+                        tuner->removeListener(this);
+                        
+                        tunerHasFinished = true;
+                        if (submitted)
+                            parent->next();
+                        break;
+                }
+            }
+            // reMeasured reference pitch is within margins
+            else
+            {
+                tuner->removeListener(this);
+                
+                tunerHasFinished = true;
+                if (submitted)
+                    parent->next();
+            }
+            break;
+    }
 }
 
 void ReportDetailsEditorScreen::tunerStatusChanged(String statusString)
