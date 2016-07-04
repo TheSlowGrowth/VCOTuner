@@ -33,6 +33,9 @@ VCOTuner::~VCOTuner()
 {
     stopTimer();
     
+    if (currentlyPlayingMidiNote >= 0)
+        trySendMidiNoteOff(currentlyPlayingMidiNote);
+    
     if (midiOut != nullptr)
     {
         delete midiOut;
