@@ -235,8 +235,9 @@ void MainComponent::showAudioSettings()
                                      "9", "10", "11", "12", "13", "14", "15", "16"};
             channelEdit.addItemList(StringArray(items, 16), 1);
             channelEdit.addListener(this);
-            channelEdit.setSelectedId(getAppProperties().getUserSettings()->getIntValue("MIDIChannel"));
-            if (channelEdit.getSelectedId() == 0) // in case nothing is selected - select first entry
+            if (getAppProperties().getUserSettings()->containsKey("MIDIChannel"))
+                channelEdit.setSelectedId(getAppProperties().getUserSettings()->getIntValue("MIDIChannel"));
+            else
                 channelEdit.setSelectedId(1);
             addAndMakeVisible(&channelEdit);
             
