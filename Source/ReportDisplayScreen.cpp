@@ -55,7 +55,7 @@ void ReportDisplayScreen::buttonClicked (Button* bttn)
             if (fileChooser.getResult().existsAsFile())
                 fileChooser.getResult().deleteFile();
             
-            FileOutputStream stream(fileChooser.getResult());
+            FileOutputStream stream(fileChooser.getResult().withFileExtension("png"));
             PNGImageFormat format;
             if (!format.writeImageToStream(img, stream))
             {
