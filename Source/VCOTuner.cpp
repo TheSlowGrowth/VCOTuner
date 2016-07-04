@@ -345,7 +345,7 @@ void VCOTuner::audioDeviceIOCallback (const float** inputChannelData,
                                     int numSamples)
 {
     if (inputChannelData == nullptr)
-	return;
+        return;
     const AudioBuffer<const float> inputBuffer(inputChannelData, numInputChannels, numSamples);
 
     if (stopMeasurement)
