@@ -37,7 +37,8 @@ MainWindow::MainWindow()
     
     setContentOwned (new MainComponent (), false);
     
-    restoreWindowStateFromString (getAppProperties().getUserSettings()->getValue ("mainWindowPos"));
+    if (getAppProperties().getUserSettings()->containsKey("mainWindowPos"))
+        restoreWindowStateFromString (getAppProperties().getUserSettings()->getValue ("mainWindowPos"));
     setVisible(true);
 }
 
