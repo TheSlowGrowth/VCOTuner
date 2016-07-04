@@ -604,6 +604,9 @@ String VCOTuner::getStatusString() const
         case continuousFrequencyMeasurement:
             return "Continuously measuring frequency...";
             break;
+        case prepareSingleMeasurement:
+        case singleMeasurement:
+            return "Measuring frequency for MIDI note " + String(singleMeasurementPitch) + " ...";
         default:
             return "";
             break;

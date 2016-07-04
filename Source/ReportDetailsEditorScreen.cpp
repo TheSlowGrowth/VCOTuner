@@ -247,7 +247,7 @@ void ReportDetailsEditorScreen::tunerFinished()
                         break;
                 }
             }
-            // reMeasured reference pitch is within margins
+            // re-measured reference pitch is within margins
             else
             {
                 tuner->removeListener(this);
