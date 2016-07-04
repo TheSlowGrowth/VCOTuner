@@ -12,7 +12,7 @@
 #include "MainComponent.h"
 #include "ReportCreatorWindow.h"
 
-MainComponent::MainComponent() : tuner(&deviceManager)
+MainComponent::MainComponent() : tuner(&deviceManager), display(&tuner)
 {
     ScopedPointer<XmlElement> savedAudioState (getAppProperties().getUserSettings()
                                                ->getXmlValue ("audioDeviceState"));
@@ -123,13 +123,14 @@ void MainComponent::resized()
     display.setBounds(borderWidth,
                       regimeLabel.getBottom() + borderWidth,
                       getWidth() - 2 * borderWidth,
-                      getHeight() - 2* borderWidth - audioSettings.getBottom());
+                      getHeight() - 2* borderWidth - regimeLabel.getBottom());
 
 }
 
 void MainComponent::paint(Graphics& g)
 {
     g.setColour(Colours::lightgrey);
+    g.fillAll();
 }
 
 
