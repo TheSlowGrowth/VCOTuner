@@ -30,7 +30,7 @@
         <MODULEPATH id="juce_audio_basics" path="../Juce/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
-    <LINUX_MAKE targetFolder="Builds/Linux" vstFolder="" vst3Folder="" extraDefs="JUCE_JACK=1">
+    <LINUX_MAKE targetFolder="Builds/Linux" vstFolder="" vst3Folder="" extraDefs="">
       <CONFIGURATIONS>
         <CONFIGURATION name="Debug" isDebug="1" optimisation="1" targetName="VCO Tuner"
                        libraryPath="/usr/X11R6/lib/"/>
@@ -157,6 +157,7 @@
     <FILE id="nehnGjkrX" name="Startup.cpp" compile="1" resource="0" file="Source/Startup.cpp"/>
     <FILE id="vyCHyw" name="VCOTuner.cpp" compile="1" resource="0" file="Source/VCOTuner.cpp"/>
     <FILE id="b00cHG" name="VCOTuner.h" compile="0" resource="0" file="Source/VCOTuner.h"/>
+    <FILE id="icgGFC" name="VersionInfo.h" compile="0" resource="0" file="Source/VersionInfo.h"/>
     <FILE id="u8iyuo" name="Visualizer.cpp" compile="1" resource="0" file="Source/Visualizer.cpp"/>
     <FILE id="wiu4tT" name="Visualizer.h" compile="0" resource="0" file="Source/Visualizer.h"/>
   </MAINGROUP>
@@ -164,7 +165,7 @@
                JUCE_QUICKTIME="disabled" JUCE_USE_FLAC="disabled" JUCE_USE_OGGVORBIS="disabled"
                JUCE_USE_CDBURNER="disabled" JUCE_USE_CDREADER="disabled" JUCE_USE_CAMERA="disabled"
                JUCE_PLUGINHOST_VST="disabled" JUCE_PLUGINHOST_AU="disabled"
-               JUCE_WEB_BROWSER="disabled" JUCE_PLUGINHOST_VST3="disabled"/>
+               JUCE_WEB_BROWSER="disabled" JUCE_PLUGINHOST_VST3="disabled" JUCE_JACK="enabled"/>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="1"/>
     <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="1"/>
