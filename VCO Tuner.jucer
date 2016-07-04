@@ -30,7 +30,7 @@
         <MODULEPATH id="juce_audio_basics" path="../Juce/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
-    <LINUX_MAKE targetFolder="Builds/Linux" vstFolder="" vst3Folder="">
+    <LINUX_MAKE targetFolder="Builds/Linux" vstFolder="" vst3Folder="" extraDefs="JUCE_JACK=1">
       <CONFIGURATIONS>
         <CONFIGURATION name="Debug" isDebug="1" optimisation="1" targetName="VCO Tuner"
                        libraryPath="/usr/X11R6/lib/"/>

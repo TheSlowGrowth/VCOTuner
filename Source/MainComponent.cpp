@@ -280,7 +280,7 @@ void MainComponent::showAudioSettings()
     };
     
     SettingsWrapperComponent content(&tuner, deviceManager);
-    content.setSize(400, 320);
+    content.setSize(400, 340);
     
     
     DialogWindow::LaunchOptions o;
@@ -289,7 +289,7 @@ void MainComponent::showAudioSettings()
     o.componentToCentreAround       = this;
     o.dialogBackgroundColour        = Colours::lightgrey;
     o.escapeKeyTriggersCloseButton  = true;
-    o.resizable                     = false;
+    o.resizable                     = true;
     o.useNativeTitleBar             = true;
     
     o.runModal();
