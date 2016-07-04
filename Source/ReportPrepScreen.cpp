@@ -25,6 +25,9 @@ ReportPrepScreen::ReportPrepScreen(VCOTuner* t, Visualizer* v, ReportCreatorWind
 
 ReportPrepScreen::~ReportPrepScreen()
 {
+	stopTimer();
+	Timer::callPendingTimersSynchronously();
+
     if (tuner->isRunning())
         tuner->toggleState();
 }

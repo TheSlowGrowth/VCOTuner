@@ -280,7 +280,7 @@ void MainComponent::showAudioSettings()
     };
     
     SettingsWrapperComponent content(&tuner, deviceManager);
-    content.setSize(400, 340);
+    content.setSize(400, 380);
     
     
     DialogWindow::LaunchOptions o;

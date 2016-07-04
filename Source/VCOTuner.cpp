@@ -571,6 +571,9 @@ void VCOTuner::audioDeviceAboutToStart (AudioIODevice* device)
 /** inherited from AudioIODeviceCallback */
 void VCOTuner::audioDeviceStopped()
 {
+	if (isRunning())
+		errors.add("The audio device was stopped while the measurement was still running. Please check that the device is still powered, all cables are connected and the driver is working correctly.");
+
     switchState(stopped);
 }
 
