@@ -347,9 +347,10 @@ void VCOTuner::audioDeviceIOCallback (const float** inputChannelData,
                                     int numOutputChannels,
                                     int numSamples)
 {
+    if (inputChannelData == nullptr)
+        return;
     const AudioBuffer<const float> inputBuffer(inputChannelData, numInputChannels, numSamples);
-    AudioBuffer<float> outputBuffer(outputChannelData, numOutputChannels, numSamples);
-    
+
     if (stopMeasurement)
     {
         startMeasurement = false;
@@ -426,8 +427,12 @@ void VCOTuner::audioDeviceIOCallback (const float** inputChannelData,
             startMeasurement = false;
         }
     }
-    
-    outputBuffer.clear();
+
+    if (outputChannelData != nullptr)
+    { 
+    	AudioBuffer<float> outputBuffer(outputChannelData, numOutputChannels, numSamples);
+    	outputBuffer.clear();
+    }
 }
 
 void VCOTuner::switchState(VCOTuner::State newState)
