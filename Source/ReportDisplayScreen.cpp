@@ -44,8 +44,12 @@ void ReportDisplayScreen::buttonClicked (Button* bttn)
 {
     if (bttn == &save)
     {
-        // store as an image file
-        FileChooser fileChooser("Save report ... ", File::nonexistent, "*.png");
+        // store as an image file (don't use native file chooser for linux - it crashes on some systems)
+#ifdef JUCE_LINUX
+        FileChooser fileChooser("Save report ... ", File::nonexistent, "*.png", false);
+#else
+        FileChooser fileChooser("Save report ... ", File::nonexistent, "*.png", true);
+#endif
         if (fileChooser.browseForFileToSave(true))
         {
             if (fileChooser.getResult().existsAsFile())
