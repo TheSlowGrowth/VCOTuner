@@ -31,9 +31,6 @@ ReportPrepScreen::~ReportPrepScreen()
 
 void ReportPrepScreen::timerCallback()
 {
-    // TODO: remove!
-    //parent->next();
-    
     currentFreq = tuner->getContinuousMesurementResult();
     
     if (currentFreq < ReportProperties::desiredAdjustmentFrequency + ReportProperties::allowedDeviation
