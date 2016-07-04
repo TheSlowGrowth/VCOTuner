@@ -12,9 +12,9 @@
 #include "Visualizer.h"
 
 
-Visualizer::Visualizer()
+Visualizer::Visualizer(VCOTuner* t)
 {
-    
+    tuner = t;
 }
 
 Visualizer::~Visualizer()
@@ -58,6 +58,17 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
         return;
     }
     
+    // fill background
+    //g.setColour(Colours::lightgrey);
+    //g.fillAll();
+    
+    const int bottomBarHeight = 20;
+    
+    int imageHeight = height - bottomBarHeight;
+    
+    // prepare coordinate transformation (flipping the y axis)
+    heightForFlipping = (float) imageHeight;
+    
     const float sidebarWidth = 75;
     double columnWidth = (double) (width - sidebarWidth) / (double) measurements.size();
     const double allowedPitchOffset = 0.02; // 5 cents allowed
@@ -70,17 +81,17 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
     if (max < min)
         return;
     
-    double vertScaling = (double) height / (max - min);
+    double vertScaling = (double) imageHeight / (max - min);
     
     // draw maximum "in-tune" pitch offset and center line
     g.setColour(Colours::grey);
     const float dashLengths[] = {4, 4};
     double position = (allowedPitchOffset - min) * vertScaling;
-    g.drawDashedLine(Line<float>(sidebarWidth, (float) position, (float) width, (float) position), dashLengths, 2);
+    g.drawDashedLine(Line<float>(sidebarWidth, yFlip((float) position), (float) width, yFlip((float) position)), dashLengths, 2);
     position = (-allowedPitchOffset - min) * vertScaling;
-    g.drawDashedLine(Line<float>(sidebarWidth, (float) position, (float) width, (float) position), dashLengths, 2);
+    g.drawDashedLine(Line<float>(sidebarWidth, yFlip((float) position), (float) width, yFlip((float) position)), dashLengths, 2);
     position = (- min) * vertScaling;
-    g.drawLine(sidebarWidth, (float) position, (float) width, (float) position);
+    g.drawLine(sidebarWidth, yFlip((float) position), (float) width, yFlip((float) position));
     
     // draw scales
     g.setColour(Colours::grey);
@@ -89,7 +100,7 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
     double lineInterval = allowedIntervals[0];
     int currentIntervalIndex = 0;
     
-    int numLinesAllowed = height / 30;
+    int numLinesAllowed = imageHeight / 30;
     while (((max - min) / lineInterval) > numLinesAllowed)
     {
         lineInterval = allowedIntervals[++currentIntervalIndex];
@@ -98,7 +109,7 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
     }
     bool useSemitoneTexts = lineInterval >= 1.0;
     
-    int numPosLines = (int) trunc(max/lineInterval) + 1;
+    int numPosLines = (int) trunc(max/lineInterval);
     int numNegLines = (int) trunc(-min/lineInterval);
     for (double y = numPosLines; y > -numNegLines; y--)
     {
@@ -109,14 +120,14 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
         String lineText = numberString;
         if (!useSemitoneTexts)
             lineText += " cents";
-        g.drawText(lineText, 0, (int) position - 8, (int) left-4, 16, Justification::centredRight);
+        g.drawText(lineText, 0, (int) yFlip(position + g.getCurrentFont().getHeight()/2), (int) left-4, g.getCurrentFont().getHeight(), Justification::centredRight);
         
         // don't overwrite maximum "in-tune" lines
         if (y*lineInterval == allowedPitchOffset || y*lineInterval == -allowedPitchOffset)
             continue;
         
         const float dashLengths[] = {4, 20};
-        g.drawDashedLine(Line<float>((float) left, (float) position, (float) width, (float) position), dashLengths, 2);
+        g.drawDashedLine(Line<float>((float) left, yFlip((float) position), (float) width, yFlip((float) position)), dashLengths, 2);
         
     }
     
@@ -130,20 +141,97 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
         float minPosition = (float) ((measurements[i].pitchOffset - measurements[i].pitchDeviation - min) * vertScaling);
         
         g.setColour(Colours::springgreen.withAlpha(0.4f));
-        g.fillRect(left, minPosition, (float) columnWidth, maxPosition - minPosition);
+        g.fillRect(left, yFlip(maxPosition), (float) columnWidth, maxPosition - minPosition);
         
         // draw average value
         float position = (float) ((measurements[i].pitchOffset - min) * vertScaling);
-
-        
         g.setColour(Colours::green);
-        g.drawLine(left, position, left + (float) columnWidth, position);
+        g.drawLine(left, yFlip(position), left + (float) columnWidth, yFlip(position));
+    }
+    
+    // draw the X-Axis label
+    g.setColour(Colours::black);
+    g.drawText("MIDI note", 0, imageHeight, sidebarWidth - 10, bottomBarHeight, Justification::centredRight);
+    
+    // draw the corresponding note values to the X axis
+    const int numPitchTextIntervals = 5;
+    const int pitchTextIntervals[numPitchTextIntervals] = {1, 2, 5, 10, 20};
+    int currentPitchTextIntervalIndex = 0;
+    while (g.getCurrentFont().getStringWidth("123.") > pitchTextIntervals[currentPitchTextIntervalIndex] * columnWidth)
+    {
+        currentPitchTextIntervalIndex++;
+        if (currentPitchTextIntervalIndex >= numPitchTextIntervals)
+            break;
+    }
+    int pitchTextInterval = pitchTextIntervals[currentPitchTextIntervalIndex];
+    int startLine = 0;
+    int endLine = measurements.size() - 1;
+    while (measurements[startLine].midiPitch % pitchTextInterval != 0)
+    {
+        startLine++;
+        if (startLine >= measurements.size())
+            return;
+    }
+    while (measurements[endLine].midiPitch % pitchTextInterval != 0)
+    {
+        endLine--;
+        if (endLine < 0 || endLine < startLine)
+            return;
+    }
+    
+    for (int i = startLine; i <= endLine; i += pitchTextInterval)
+    {
+        g.setColour(Colours::black);
+        float textWidth = g.getCurrentFont().getStringWidth(String(measurements[i].midiPitch));
+        float left = sidebarWidth + i * columnWidth;
+        float x = left + columnWidth/2 - textWidth/2;
+        float y = imageHeight;
+        g.drawText(String(measurements[i].midiPitch), x, y, textWidth, bottomBarHeight, Justification::centred);
+        
+        // the line for the reference pitch will be drawn later
+        if (measurements[i].midiPitch == tuner->getReferencePitch())
+            continue;
+        
+        // also draw dim vertical lines for the larger devisions or if the columns get very narrow
+        if (pitchTextInterval >= 2)
+        {
+            g.setColour(Colours::blue.withAlpha(0.05f));
+            g.fillRect(Rectangle<float>(left, 0, columnWidth, imageHeight));
+        }
+        if (pitchTextInterval == 1 && columnWidth < g.getCurrentFont().getStringWidth("123."))
+        {
+            if (i % 2 == 0)
+            {
+                g.setColour(Colours::blue.withAlpha(0.05f));
+                g.fillRect(Rectangle<float>(left, 0, columnWidth, imageHeight));
+            }
+        }
+    }
+    
+    // draw a blue indicator for the reference pitch (if included in the measurements)
+    if (measurements[0].midiPitch < tuner->getReferencePitch()
+        && measurements.getLast().midiPitch > tuner->getReferencePitch())
+    {
+        for (int i = 0; i < measurements.size(); i++)
+        {
+            if (measurements[i].midiPitch == tuner->getReferencePitch())
+            {
+                float left = sidebarWidth + i * columnWidth;
+                g.setColour(Colours::blue.withAlpha(0.15f));
+                g.fillRect(Rectangle<float>(left, 0, columnWidth, imageHeight));
+            }
+        }
     }
 }
 
 void Visualizer::paint(Graphics& g)
 {
     paint(g, getWidth(), getHeight());
+}
+
+float Visualizer::yFlip(float y)
+{
+    return heightForFlipping - y;
 }
 
 void Visualizer::newMeasurementReady(const VCOTuner::measurement_t& m)

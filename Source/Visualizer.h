@@ -17,7 +17,7 @@ class Visualizer: public Component,
                   public VCOTuner::Listener
 {
 public:
-    Visualizer();
+    Visualizer(VCOTuner* t);
     ~Visualizer();
     
     void paintWithFixedScaling(Graphics& g, int width, int height, double min, double max);
@@ -30,6 +30,11 @@ public:
 private:
     /** holds the list of completed measurements */
     Array<VCOTuner::measurement_t> measurements;
+    
+    float heightForFlipping;
+    float yFlip(float y);
+    
+    VCOTuner* tuner;
 };
 
 

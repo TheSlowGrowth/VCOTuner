@@ -34,8 +34,9 @@ ReportDetailsEditorScreen::ReportDetailsEditorScreen(VCOTuner* t, Visualizer* v,
     addAndMakeVisible(&brandLabel);
     
     brandEdit.setName("BrandEdit");
-    brandEdit.setText(getAppProperties().getUserSettings()->getValue("DUT-Brand"), dontSendNotification);
-    if (brandEdit.getText() == "")
+    if (getAppProperties().getUserSettings()->containsKey("DUT-Brand"))
+        brandEdit.setText(getAppProperties().getUserSettings()->getValue("DUT-Brand"), dontSendNotification);
+    else
         brandEdit.setText(" - ", dontSendNotification);
     addAndMakeVisible(&brandEdit);
     
@@ -45,8 +46,9 @@ ReportDetailsEditorScreen::ReportDetailsEditorScreen(VCOTuner* t, Visualizer* v,
     addAndMakeVisible(&deviceLabel);
     
     deviceEdit.setName("deviceEdit");
-    deviceEdit.setText(getAppProperties().getUserSettings()->getValue("DUT-Device"), dontSendNotification);
-    if (deviceEdit.getText() == "")
+    if (getAppProperties().getUserSettings()->containsKey("DUT-Device"))
+        deviceEdit.setText(getAppProperties().getUserSettings()->getValue("DUT-Device"), dontSendNotification);
+    else
         deviceEdit.setText(" - ", dontSendNotification);
     addAndMakeVisible(&deviceEdit);
     
@@ -56,8 +58,9 @@ ReportDetailsEditorScreen::ReportDetailsEditorScreen(VCOTuner* t, Visualizer* v,
     addAndMakeVisible(&interfaceBrandLabel);
     
     interfaceBrandEdit.setName("InterfaceBrandEdit");
-    interfaceBrandEdit.setText(getAppProperties().getUserSettings()->getValue("Interface-Brand"), dontSendNotification);
-    if (interfaceBrandEdit.getText() == "")
+    if (getAppProperties().getUserSettings()->containsKey("Interface-Brand"))
+        interfaceBrandEdit.setText(getAppProperties().getUserSettings()->getValue("Interface-Brand"), dontSendNotification);
+    else
         interfaceBrandEdit.setText(" - ", dontSendNotification);
     addAndMakeVisible(&interfaceBrandEdit);
     
@@ -67,8 +70,9 @@ ReportDetailsEditorScreen::ReportDetailsEditorScreen(VCOTuner* t, Visualizer* v,
     addAndMakeVisible(&interfaceLabel);
     
     interfaceEdit.setName("InterfaceEdit");
-    interfaceEdit.setText(getAppProperties().getUserSettings()->getValue("Interface-Device"), dontSendNotification);
-    if (interfaceEdit.getText() == "")
+    if (getAppProperties().getUserSettings()->containsKey("Interface-Device"))
+        interfaceEdit.setText(getAppProperties().getUserSettings()->getValue("Interface-Device"), dontSendNotification);
+    else
         interfaceEdit.setText(" - ", dontSendNotification);
     addAndMakeVisible(&interfaceEdit);
     
@@ -80,8 +84,9 @@ ReportDetailsEditorScreen::ReportDetailsEditorScreen(VCOTuner* t, Visualizer* v,
     notesEdit.setName("NotesEdit");
     notesEdit.setMultiLine(true);
     notesEdit.setReturnKeyStartsNewLine(true);
-    notesEdit.setText(getAppProperties().getUserSettings()->getValue("Notes"), dontSendNotification);
-    if (notesEdit.getText() == "")
+    if (getAppProperties().getUserSettings()->containsKey("Notes"))
+        notesEdit.setText(getAppProperties().getUserSettings()->getValue("Notes"), dontSendNotification);
+    else
         notesEdit.setText(" - ", dontSendNotification);
     addAndMakeVisible(&notesEdit);
     

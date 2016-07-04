@@ -26,6 +26,8 @@ ReportCreatorWindow::ReportCreatorWindow(VCOTuner* t, Visualizer* v)
 ReportCreatorWindow::~ReportCreatorWindow()
 {
     delete currentContentComponent;
+    if (tuner->isRunning())
+        tuner->toggleState();
 }
 
 void ReportCreatorWindow::next()

@@ -12,7 +12,7 @@
 #include "MainComponent.h"
 #include "ReportCreatorWindow.h"
 
-MainComponent::MainComponent() : tuner(&deviceManager)
+MainComponent::MainComponent() : tuner(&deviceManager), display(&tuner)
 {
     ScopedPointer<XmlElement> savedAudioState (getAppProperties().getUserSettings()
                                                ->getXmlValue ("audioDeviceState"));
@@ -82,6 +82,15 @@ MainComponent::MainComponent() : tuner(&deviceManager)
     
     cycle = false;
     creatingReport = false;
+    
+    // for first-time starters, display a help message and the audio settings
+    if ((!getAppProperties().getUserSettings()->containsKey("hideWelcomeScreen"))
+        || (getAppProperties().getUserSettings()->getIntValue("hideWelcomeScreen") != 1))
+    {
+        NativeMessageBox::showMessageBox(AlertWindow::AlertIconType::InfoIcon, "Welcome!", welcomeText);
+        showAudioSettings();
+        getAppProperties().getUserSettings()->setValue("hideWelcomeScreen", 1);
+    }
 }
 
 MainComponent::~MainComponent()
@@ -114,13 +123,14 @@ void MainComponent::resized()
     display.setBounds(borderWidth,
                       regimeLabel.getBottom() + borderWidth,
                       getWidth() - 2 * borderWidth,
-                      getHeight() - 2* borderWidth - audioSettings.getBottom());
+                      getHeight() - 2* borderWidth - regimeLabel.getBottom());
 
 }
 
 void MainComponent::paint(Graphics& g)
 {
     g.setColour(Colours::lightgrey);
+    g.fillAll();
 }
 
 
@@ -235,8 +245,9 @@ void MainComponent::showAudioSettings()
                                      "9", "10", "11", "12", "13", "14", "15", "16"};
             channelEdit.addItemList(StringArray(items, 16), 1);
             channelEdit.addListener(this);
-            channelEdit.setSelectedId(getAppProperties().getUserSettings()->getIntValue("MIDIChannel"));
-            if (channelEdit.getSelectedId() == 0) // in case nothing is selected - select first entry
+            if (getAppProperties().getUserSettings()->containsKey("MIDIChannel"))
+                channelEdit.setSelectedId(getAppProperties().getUserSettings()->getIntValue("MIDIChannel"));
+            else
                 channelEdit.setSelectedId(1);
             addAndMakeVisible(&channelEdit);
             
@@ -373,4 +384,6 @@ const char* MainComponent::resolutionsTexts[numResolutions] = {
 };
 
 const MainComponent::regime_t MainComponent::reportRange = {24, 96, 1};
+
+const String MainComponent::welcomeText = String("Welcome to the VCO Tuner!") + newLine + newLine + "Please follow these steps to get running:" + newLine + "1) connect a MIDI-CV interface to your Computer" + newLine + "2) connect the CV output of the interface to your oscillators frequency input" + newLine + "3) Connect one of the oscillators basic wavaforms (sine, saw, triangle, pulse, etc.) directly to your soundcard." + newLine + newLine + "When you close this dialog, the audio settings panel will open. Please select your audio and midi device there." + newLine + newLine + "Have fun!" + newLine + newLine + "PS: If you find any bugs, please raise an issue on the github repository under https://github.com/TheSlowGrowth/VCOTuner. Thanks!";
 

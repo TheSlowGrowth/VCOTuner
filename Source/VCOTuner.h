@@ -37,6 +37,7 @@ public:
     
     double getCurrentSampleRate() { return sampleRate; }
     double getReferenceFrequency() { return referenceFrequency; }
+    int getReferencePitch() const { return referencePitch; }
     
     String getStatusString()const;
     
