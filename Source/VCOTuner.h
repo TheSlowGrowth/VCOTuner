@@ -144,7 +144,6 @@ private:
     StringArray errors;
     
     AudioDeviceManager* deviceManager;
-    MidiOutput* midiOut;
     int midiChannel;
     
     /** state of the state machine */

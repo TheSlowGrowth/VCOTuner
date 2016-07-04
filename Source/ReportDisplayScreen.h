@@ -22,7 +22,7 @@ public:
     
     void buttonClicked (Button* bttn) override;
     void resized() override;
-    void paint(Graphics& g);
+    void paint(Graphics& g) override;
     
 private:
     void drawReport();

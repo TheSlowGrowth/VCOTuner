@@ -18,7 +18,6 @@ VCOTuner::VCOTuner(AudioDeviceManager* d)
     lowestPitch = 30;
     highestPitch = 120;
     pitchIncrement = 12;
-    midiOut = nullptr;
     deviceManager = d;
     midiChannel = 1;
     currentlyPlayingMidiNote = -1;
@@ -36,11 +35,6 @@ VCOTuner::~VCOTuner()
     if (currentlyPlayingMidiNote >= 0)
         trySendMidiNoteOff(currentlyPlayingMidiNote);
     
-    if (midiOut != nullptr)
-    {
-        delete midiOut;
-        midiOut = nullptr;
-    }
     deviceManager->removeAudioCallback(this);
 }
 
@@ -321,8 +315,13 @@ void VCOTuner::startContinuousMeasurement(int pitch)
 
 void VCOTuner::trySendMidiNoteOn(int pitch)
 {
+    MidiOutput* midiOut = deviceManager->getDefaultMidiOutput();
     if (midiOut == nullptr)
+    {
+        errors.add("You don't have a MIDI output device selected or the selected device is not available.");
+        switchState(stopped);
         return;
+    }
     
     if (currentlyPlayingMidiNote != -1)
         trySendMidiNoteOff(currentlyPlayingMidiNote);
@@ -333,8 +332,13 @@ void VCOTuner::trySendMidiNoteOn(int pitch)
 
 void VCOTuner::trySendMidiNoteOff(int pitch)
 {
+    MidiOutput* midiOut = deviceManager->getDefaultMidiOutput();
     if (midiOut == nullptr)
+    {
+        errors.add("You don't have a MIDI output device selected or the selected device is not available.");
+        switchState(stopped);
         return;
+    }
     
     midiOut->sendMessageNow(MidiMessage::noteOff(midiChannel, pitch));
     currentlyPlayingMidiNote = -1;
@@ -470,18 +474,7 @@ void VCOTuner::changeListenerCallback (ChangeBroadcaster* source)
 {
     if (source == deviceManager)
     {
-        if (midiOut != nullptr)
-        {
-            delete midiOut;
-            midiOut = nullptr;
-        }
-        
-        midiOut = MidiOutput::openDevice(MidiOutput::getDefaultDeviceIndex());
-        if (midiOut == nullptr)
-        {
-            errors.add("Could not open any midi device");
-            switchState(stopped);
-        }
+        switchState(stopped);
     }
 }
 
