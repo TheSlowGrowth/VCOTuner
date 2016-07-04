@@ -1,0 +1,8 @@
+To compile this on linux, please install the following packages first
+
+$  sudo apt-get install build-essential libxcursor-dev libx11-dev libxinerama-dev libxrandr-dev libfreetype6-dev libjack-dev
+
+then execute
+
+$  cd Builds/Linux/
+$  make
