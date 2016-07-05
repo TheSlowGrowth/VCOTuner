@@ -1,5 +1,5 @@
 # VCOTuner
-A JUCE based tuner application for VCOs, VCFs and other analog gear. It runs on Windows, Mac and Linux (linux support is still experimental)
+A JUCE based tuner application for VCOs, VCFs and other analog gear. It runs on Windows, Mac and Linux.
 
 ## Overview
 
