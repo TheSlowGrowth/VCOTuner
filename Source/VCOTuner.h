@@ -22,6 +22,8 @@ public:
     ~VCOTuner();
     
     void toggleState();
+    void start();
+    void stop();
     bool isRunning() const { return state != stopped && state != finished; }
     
     void setNumMeasurementRange(int lowestPitch, int pitchIncrement, int highestPitch);
@@ -43,6 +45,9 @@ public:
     
     void startContinuousMeasurement(int pitch);
     double getContinuousMesurementResult() const { return continuousFreqMeasurementResult; }
+    
+    void startSingleMeasurement(int pitch);
+    double getSingleMeasurementResult() const { return singleMeasurementResult; }
     
     /** holds all properties of a single measurements */
     typedef struct
@@ -102,7 +107,9 @@ private:
         measurement,
         finished,
         prepareContinuousFrequencyMeasurement,
-        continuousFrequencyMeasurement
+        continuousFrequencyMeasurement,
+        prepareSingleMeasurement,
+        singleMeasurement
     };
     
     ListenerList<Listener> listeners;
@@ -144,7 +151,6 @@ private:
     StringArray errors;
     
     AudioDeviceManager* deviceManager;
-    MidiOutput* midiOut;
     int midiChannel;
     
     /** state of the state machine */
@@ -173,6 +179,21 @@ private:
     int continuousFrequencyMeasurementPitch;
     double continuousFreqMeasurementResult;
     double continuousFreqMeasurementDeviation;
+    
+    int singleMeasurementPitch;
+    double singleMeasurementResult;
+    double singleMeasurementDeviation;
+    
+    struct Errors
+    {
+        static const String highJitter;
+        static const String noZeroCrossings;
+        static const String highJitterTimeOut;
+        static const String stableTimeout;
+        static const String noFrequencyChangeBetweenMeasurements;
+        static const String noMidiDeviceAvailable;
+        static const String audioDeviceStoppedDuringMeasurement;
+    };
 };
 
 

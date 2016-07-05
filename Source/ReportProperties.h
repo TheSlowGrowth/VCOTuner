@@ -26,6 +26,11 @@ public:
     static const double desiredAdjustmentFrequency;
     static const double allowedDeviation;
     static const int requiredHoldTimeInMs = 4000;
+    
+    // after the measurement is completed, the reference pitch is measured again
+    // if it's too far off the initially measured frequency (== there was a drift
+    // during the measurement) then the user is asked to repeat the measurement.
+    static const double desiredDriftMargin;
 };
 
 

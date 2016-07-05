@@ -85,10 +85,10 @@ void ReportDisplayScreen::drawReport()
     
     const int contentHeight = 16;
     const int lineHeight = contentHeight + contentHeight/4;
-    Rectangle<int> leftColumnLabels(10, 10, 160, contentHeight);
-    Rectangle<int> leftColumnContent(160, 10, 200, contentHeight);
-    Rectangle<int> rightColumnLabels(380, 10, 120, contentHeight);
-    Rectangle<int> rightColumnContent(500, 10, 800 - 10 - 500, contentHeight);
+    Rectangle<int> leftColumnLabels(10, 10, 170, contentHeight);
+    Rectangle<int> leftColumnContent(170, 10, 230, contentHeight);
+    Rectangle<int> rightColumnLabels(420, 10, 120, contentHeight);
+    Rectangle<int> rightColumnContent(540, 10, 800 - 10 - 540, contentHeight);
     
     
     String dutBrand = getAppProperties().getUserSettings()->getValue("DUT-Brand");
@@ -96,6 +96,22 @@ void ReportDisplayScreen::drawReport()
     String interfaceBrand = getAppProperties().getUserSettings()->getValue("Interface-Brand");
     String interfaceType = getAppProperties().getUserSettings()->getValue("Interface-Device");
     String notes = getAppProperties().getUserSettings()->getValue("Notes");
+    double initalReferenceFreq = tuner->getReferenceFrequency();
+    double reMeasuredFreq = tuner->getSingleMeasurementResult();
+    double pitchDrift = 12.0 * log(reMeasuredFreq / initalReferenceFreq) / log(2.0);
+    String driftString;
+    if (std::abs(pitchDrift) >= 1)
+        driftString = String(pitchDrift, 2) + " semitones";
+    else if (String(std::abs(pitchDrift), 2) == "1.00")
+        driftString = String(pitchDrift, 2) + " semitone";
+    else
+        driftString = String(pitchDrift * 100, 1) + " cents";
+    if (std::abs(pitchDrift) >= 2)
+        driftString += " (Holy crap! R u ok?)";
+    else if (std::abs(pitchDrift) >= 0.5)
+        driftString += " (Oh dear.)";
+    else if (std::abs(pitchDrift) > 0.02)
+        driftString += " (not quite stable)";
     
     g.drawText("Device under test:", leftColumnLabels, Justification::topLeft);
     g.drawText("'" + dutType + "' (" + dutBrand + ")", leftColumnContent, Justification::topLeft);
@@ -114,6 +130,11 @@ void ReportDisplayScreen::drawReport()
     
     g.drawText("Reference frequency:", leftColumnLabels, Justification::topLeft);
     g.drawText(String(tuner->getReferenceFrequency()) + " Hz", leftColumnContent, Justification::topLeft);
+    leftColumnLabels.translate(0, lineHeight);
+    leftColumnContent.translate(0, lineHeight);
+    
+    g.drawText("Drift during measurement:", leftColumnLabels, Justification::topLeft);
+    g.drawText(driftString, leftColumnContent, Justification::topLeft);
     leftColumnLabels.translate(0, lineHeight);
     leftColumnContent.translate(0, lineHeight);
     

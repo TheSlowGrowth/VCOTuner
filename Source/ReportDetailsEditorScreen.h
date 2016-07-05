@@ -62,6 +62,13 @@ private:
     Visualizer* visualizer;
     ReportCreatorWindow* parent;
     
+    enum State
+    {
+        measuring,
+        reMeasuringReference
+    } state;
+    double initalReferenceFreq;
+    
     JUCE_DECLARE_NON_COPYABLE(ReportDetailsEditorScreen)
 };
 

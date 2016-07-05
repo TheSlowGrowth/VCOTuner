@@ -18,7 +18,6 @@ VCOTuner::VCOTuner(AudioDeviceManager* d)
     lowestPitch = 30;
     highestPitch = 120;
     pitchIncrement = 12;
-    midiOut = nullptr;
     deviceManager = d;
     midiChannel = 1;
     currentlyPlayingMidiNote = -1;
@@ -36,11 +35,6 @@ VCOTuner::~VCOTuner()
     if (currentlyPlayingMidiNote >= 0)
         trySendMidiNoteOff(currentlyPlayingMidiNote);
     
-    if (midiOut != nullptr)
-    {
-        delete midiOut;
-        midiOut = nullptr;
-    }
     deviceManager->removeAudioCallback(this);
 }
 
@@ -72,6 +66,29 @@ void VCOTuner::toggleState()
     {
         switchState(stopped);
     }
+}
+
+void VCOTuner::start()
+{
+    if (!isRunning())
+        switchState(prepRefMeasurement);
+}
+
+void VCOTuner::stop()
+{
+    if (isRunning())
+        switchState(stopped);
+}
+
+void VCOTuner::startSingleMeasurement(int pitch)
+{
+    if (state != stopped && state != finished)
+        switchState(stopped);
+    
+    singleMeasurementPitch = pitch;
+    singleMeasurementResult = -1;
+    
+    switchState(prepareSingleMeasurement);
 }
 
 StringArray VCOTuner::getLastErrors()
@@ -119,7 +136,7 @@ void VCOTuner::timerCallback()
                 
                 if (lError == notStable)
                 {
-                    errors.add("The pitch on the audio input is not stable. This can be due to excessive jitter or a frequency modulation on the oscillator. Please note that the recognition only works for 'simple' waveforms with two zero-crossings per cycle. Please choose Saw, Triangle, Sine, Pulse, etc.");
+                    errors.add(Errors::highJitter);
                     switchState(stopped);
                 }
                 else
@@ -144,7 +161,12 @@ void VCOTuner::timerCallback()
 
             if (cycleCounter > 1000)
             {
-                errors.add("The incoming audio signal does not seem to contain any zero-crossings. Are you sure the oscillator signal is getting through to us? Check your audio device settings.");
+                if (periodLengthsHead == 0)
+                    errors.add(Errors::noZeroCrossings);
+                else if (lError == notStable)
+                    errors.add(Errors::highJitterTimeOut);
+                else
+                    errors.add(Errors::stableTimeout);
                 stopMeasurement = true;
                 switchState(stopped);
                 break;
@@ -182,7 +204,7 @@ void VCOTuner::timerCallback()
 
                 if (lError == notStable)
                 {
-                    errors.add("The pitch on the audio input is not stable. This can be due to excessive jitter or a frequency modulation on the oscillator. Please note that the recognition only works for 'simple' waveforms with two zero-crossings per cycle. Please choose Saw, Triangle, Sine, Pulse, etc.");
+                    errors.add(Errors::highJitter);
                     switchState(stopped);
                 }
                 else
@@ -204,7 +226,7 @@ void VCOTuner::timerCallback()
                     {
                         if (std::abs(frequency - referenceFrequency)/referenceFrequency < 0.1)
                         {
-                            errors.add("Apparently the frequency of the oscillator is not changing between measurements. Please check if your MIDI-to-CV interface is set to MIDI channel " + String(midiChannel) + " and make sure that it is selected as the default midi output device in the audio and midi settings.");
+                            errors.add(Errors::noFrequencyChangeBetweenMeasurements);
                             switchState(stopped);
                         }
                     }
@@ -252,7 +274,12 @@ void VCOTuner::timerCallback()
             int expectedCycles = expectedTime * 100;
             if (cycleCounter > expectedCycles)
             {
-                errors.add("The incoming audio signal does not seem to contain any zero-crossings. Are you sure the oscillator signal is getting through? Check your audio device settings!");
+                if (periodLengthsHead == 0)
+                    errors.add(Errors::noZeroCrossings);
+                else if (lError == notStable)
+                    errors.add(Errors::highJitterTimeOut);
+                else
+                    errors.add(Errors::stableTimeout);
                 stopMeasurement = true;
                 switchState(stopped);
                 break;
@@ -272,6 +299,7 @@ void VCOTuner::timerCallback()
             trySendMidiNoteOn(continuousFrequencyMeasurementPitch);
             startMeasurement = true;
             switchState(continuousFrequencyMeasurement);
+            cycleCounter++;
         } break;
         case continuousFrequencyMeasurement:
         {
@@ -304,6 +332,90 @@ void VCOTuner::timerCallback()
                 // restart measurement
                 startMeasurement = true;
             }
+            cycleCounter++;
+        } break;
+        case prepareSingleMeasurement:
+        {
+            // wait for low level state machine to stop measuring
+            if (stopMeasurement)
+                break;
+            
+            if (cycleCounter == 0)
+            {
+                // send midi note
+                trySendMidiNoteOn(singleMeasurementPitch);
+            }
+            else
+            {
+                // after 100ms, we expect the oscillator to be settled at the new pitch
+                // (gives some safety margin for audio/midi interface latency)
+                if (cycleCounter >= 10)
+                {
+                    // start a measurement and see if we get a stable pitch here
+                    startMeasurement = true;
+                    switchState(singleMeasurement);
+                    break;
+                }
+            }
+            cycleCounter++;
+        } break;
+        case singleMeasurement:
+        {
+            // measurement done
+            if (!startMeasurement)
+            {
+                // send note off
+                trySendMidiNoteOff(singleMeasurementPitch);
+                
+                if (lError == notStable)
+                {
+                    errors.add(Errors::highJitter);
+                    switchState(stopped);
+                }
+                else
+                {
+                    // calculate frequency
+                    int numMeasurements = periodLengthsHead - indexOfFirstValidPeriodLength;
+                    int accumulator = 0;
+                    for (int i = indexOfFirstValidPeriodLength; i < periodLengthsHead; i++)
+                        accumulator += periodLengths[i];
+                    
+                    double averagePeriod = (double) accumulator / (double) numMeasurements;
+                    
+                    double frequency = sampleRate / averagePeriod;
+                    
+                    // estimate deviation of frequency
+                    double fAccumulator = 0;
+                    for (int i = indexOfFirstValidPeriodLength; i < periodLengthsHead; i++)
+                    {
+                        double f = sampleRate / (double) periodLengths[i];
+                        fAccumulator += pow(f - frequency, 2);
+                    }
+                    fAccumulator = fAccumulator / (numMeasurements - 1);
+                    double fDeviation = sqrt(fAccumulator);
+                    
+                    singleMeasurementResult = frequency;
+                    singleMeasurementDeviation = fDeviation;
+                    
+                    switchState(finished);
+                    break;
+                }
+            }
+            
+            // timeout handling
+            if (cycleCounter > 1000)
+            {
+                if (periodLengthsHead == 0)
+                    errors.add(Errors::noZeroCrossings);
+                else if (lError == notStable)
+                    errors.add(Errors::highJitterTimeOut);
+                else
+                    errors.add(Errors::stableTimeout);
+                stopMeasurement = true;
+                switchState(stopped);
+                break;
+            }
+            cycleCounter++;
         } break;
         default:
             state = stopped;
@@ -314,15 +426,20 @@ void VCOTuner::timerCallback()
 void VCOTuner::startContinuousMeasurement(int pitch)
 {
     continuousFrequencyMeasurementPitch = pitch;
-    if (state != stopped)
+    if (state != stopped && state != finished)
         switchState(stopped);
     state = prepareContinuousFrequencyMeasurement;
 }
 
 void VCOTuner::trySendMidiNoteOn(int pitch)
 {
+    MidiOutput* midiOut = deviceManager->getDefaultMidiOutput();
     if (midiOut == nullptr)
+    {
+        errors.add(Errors::noMidiDeviceAvailable);
+        switchState(stopped);
         return;
+    }
     
     if (currentlyPlayingMidiNote != -1)
         trySendMidiNoteOff(currentlyPlayingMidiNote);
@@ -333,8 +450,13 @@ void VCOTuner::trySendMidiNoteOn(int pitch)
 
 void VCOTuner::trySendMidiNoteOff(int pitch)
 {
+    MidiOutput* midiOut = deviceManager->getDefaultMidiOutput();
     if (midiOut == nullptr)
+    {
+        errors.add(Errors::noMidiDeviceAvailable);
+        switchState(stopped);
         return;
+    }
     
     midiOut->sendMessageNow(MidiMessage::noteOff(midiChannel, pitch));
     currentlyPlayingMidiNote = -1;
@@ -415,16 +537,23 @@ void VCOTuner::audioDeviceIOCallback (const float** inputChannelData,
         int numMeasurements = periodLengthsHead - indexOfFirstValidPeriodLength;
         if ((indexOfFirstValidPeriodLength > 0) && (numMeasurements > numPeriodSamples))
         {
+            lError = noError;
             initialized = false;
             startMeasurement = false;
         }
-        // ran out of recording space => period length too jittery or does change constantly
-        else if (periodLengthsHead >= maxNumPeriodLengths)
+        // the pitch hasn't stabilized yet.
+        // assign the notStable error prematurely, just in case the top level statemachine rans into
+        // a timeout and wants to know whats going on.
+        else if (indexOfFirstValidPeriodLength < 0)
         {
             lError = notStable;
             
-            initialized = false;
-            startMeasurement = false;
+            // ran out of recording space => period length too jittery or does change constantly - stop here.
+            if ((periodLengthsHead >= maxNumPeriodLengths))
+            {
+                initialized = false;
+                startMeasurement = false;
+            }
         }
     }
 
@@ -463,6 +592,9 @@ void VCOTuner::audioDeviceAboutToStart (AudioIODevice* device)
 /** inherited from AudioIODeviceCallback */
 void VCOTuner::audioDeviceStopped()
 {
+	if (isRunning())
+        errors.add(Errors::audioDeviceStoppedDuringMeasurement);
+
     switchState(stopped);
 }
 
@@ -470,18 +602,7 @@ void VCOTuner::changeListenerCallback (ChangeBroadcaster* source)
 {
     if (source == deviceManager)
     {
-        if (midiOut != nullptr)
-        {
-            delete midiOut;
-            midiOut = nullptr;
-        }
-        
-        midiOut = MidiOutput::openDevice(MidiOutput::getDefaultDeviceIndex());
-        if (midiOut == nullptr)
-        {
-            errors.add("Could not open any midi device");
-            switchState(stopped);
-        }
+        switchState(stopped);
     }
 }
 
@@ -507,8 +628,25 @@ String VCOTuner::getStatusString() const
         case continuousFrequencyMeasurement:
             return "Continuously measuring frequency...";
             break;
+        case prepareSingleMeasurement:
+        case singleMeasurement:
+            return "Measuring frequency for MIDI note " + String(singleMeasurementPitch) + " ...";
         default:
             return "";
             break;
     }
 }
+
+const String VCOTuner::Errors::highJitter = "There are zero crossings in the incoming signal but they don't seem to be coming in at a constant rate. Are you sure you're recording on the correct channel? Please use only primitive waveforms (saw, square, triangle, sine, ...) without any other processing such as delays, reverbs, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source. Or when you have dropouts (aka clicks and pops) in your audio.";
+
+const String VCOTuner::Errors::noZeroCrossings = "The incoming audio signal does not seem to contain any zero-crossings. Are you sure the oscillator signal is getting through to us? Check your audio device settings.";
+
+const String VCOTuner::Errors::highJitterTimeOut = "Timeout. " + highJitter;
+
+const String VCOTuner::Errors::stableTimeout = "There are some zero crossings in the incoming signal and they seem to come in at a constant rate - but they are coming in much slower than they should be. Are you recording from the right oscillator?";
+
+const String VCOTuner::Errors::noFrequencyChangeBetweenMeasurements = "Apparently the frequency of the oscillator is not changing between measurements. Please check if your MIDI-to-CV interface is set to the correct MIDI channel and make sure that it is selected as the default midi output device in the audio and midi settings.";
+
+const String VCOTuner::Errors::noMidiDeviceAvailable = "You don't have a MIDI output device selected or the selected device is not available.";
+
+const String VCOTuner::Errors::audioDeviceStoppedDuringMeasurement = "The audio device was stopped while the measurement was still running. Please check that the device is still powered, all cables are connected and the driver is working correctly.";

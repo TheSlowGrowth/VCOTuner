@@ -58,10 +58,6 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
         return;
     }
     
-    // fill background
-    //g.setColour(Colours::lightgrey);
-    //g.fillAll();
-    
     const int bottomBarHeight = 20;
     
     int imageHeight = height - bottomBarHeight;
@@ -72,7 +68,6 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
     const float sidebarWidth = 75;
     double columnWidth = (double) (width - sidebarWidth) / (double) measurements.size();
     const double allowedPitchOffset = 0.02; // 5 cents allowed
-    //bool displayDeviation = columnWidth > 5; // larger than 5 pixels
     
     if (min > -allowedPitchOffset)
         min = -allowedPitchOffset;
