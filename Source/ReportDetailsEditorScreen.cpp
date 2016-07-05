@@ -210,7 +210,7 @@ void ReportDetailsEditorScreen::tunerFinished()
         case reMeasuringReference:
             double initalReferenceFreq = tuner->getReferenceFrequency();
             double reMeasuredFreq = tuner->getSingleMeasurementResult();
-            double pitchDrift = 12.0 * log(reMeasuredFreq / initalReferenceFreq) / log(2.0) - 12.0;
+            double pitchDrift = 12.0 * log(reMeasuredFreq / initalReferenceFreq) / log(2.0);
             
             if (std::abs(pitchDrift) > ReportProperties::desiredDriftMargin)
             {
@@ -247,7 +247,7 @@ void ReportDetailsEditorScreen::tunerFinished()
                         break;
                 }
             }
-            // reMeasured reference pitch is within margins
+            // re-measured reference pitch is within margins
             else
             {
                 tuner->removeListener(this);

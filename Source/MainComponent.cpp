@@ -52,7 +52,7 @@ MainComponent::MainComponent() : tuner(&deviceManager), display(&tuner)
     regime.addListener(this);
     if (getAppProperties().getUserSettings()->containsKey("RegimeID"))
         regime.setSelectedId(getAppProperties().getUserSettings()->getIntValue("RegimeID"));
-    else // in case nothing is selected - select first entry
+    else
         regime.setSelectedId(1);
     addAndMakeVisible(&regime);
     
@@ -66,7 +66,7 @@ MainComponent::MainComponent() : tuner(&deviceManager), display(&tuner)
     resolution.addListener(this);
     if (getAppProperties().getUserSettings()->containsKey("ResolutionID"))
         resolution.setSelectedId(getAppProperties().getUserSettings()->getIntValue("ResolutionID"));
-    else // in case nothing is selected - select first entry
+    else
         resolution.setSelectedId(1);
     addAndMakeVisible(&resolution);
     
@@ -280,7 +280,7 @@ void MainComponent::showAudioSettings()
     };
     
     SettingsWrapperComponent content(&tuner, deviceManager);
-    content.setSize(400, 340);
+    content.setSize(400, 380);
     
     
     DialogWindow::LaunchOptions o;
@@ -331,13 +331,6 @@ void MainComponent::tunerFinished()
     
     if (creatingReport)
     {
-        // re-apply the range settings
-        int selected = regime.getSelectedId() - 1;
-        tuner.setNumMeasurementRange(regimes[selected].startNote, regimes[selected].interval, regimes[selected].endNote);
-        
-        selected = resolution.getSelectedId() - 1;
-        tuner.setResolution(resolutions[selected]);
-        
         creatingReport = false;
     }
     

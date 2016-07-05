@@ -18,6 +18,7 @@ ReportPrepScreen::ReportPrepScreen(VCOTuner* t, Visualizer* v, ReportCreatorWind
     visualizer = v;
     parent = p;
     
+    t->addListener(this);
     t->startContinuousMeasurement(ReportProperties::adjustmentPitch);
     startTimer(100);
     millisecCounter = 0;
@@ -25,6 +26,10 @@ ReportPrepScreen::ReportPrepScreen(VCOTuner* t, Visualizer* v, ReportCreatorWind
 
 ReportPrepScreen::~ReportPrepScreen()
 {
+    tuner->removeListener(this);
+	stopTimer();
+	Timer::callPendingTimersSynchronously();
+
     if (tuner->isRunning())
         tuner->toggleState();
 }
@@ -104,4 +109,10 @@ void ReportPrepScreen::paint(Graphics& g)
     
     g.drawText("Measurements will start when the frequency error is below", 0, getHeight() - 80, getWidth(), 15, juce::Justification::centred);
     g.drawText("+-" + String(ReportProperties::allowedDeviation) + " Hz for at least " + String((float) ReportProperties::requiredHoldTimeInMs / 1000.0f) + " seconds", 0, getHeight() - 65, getWidth(), 15, juce::Justification::centred);
+}
+
+void ReportPrepScreen::tunerStopped()
+{
+    if (DialogWindow* dw = findParentComponentOfClass<DialogWindow>())
+        dw->exitModalState (1);
 }

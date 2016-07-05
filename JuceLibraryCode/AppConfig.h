@@ -52,7 +52,7 @@
 // juce_audio_devices flags:
 
 #ifndef    JUCE_ASIO
- //#define JUCE_ASIO
+ #define   JUCE_ASIO 1
 #endif
 
 #ifndef    JUCE_WASAPI
@@ -72,7 +72,7 @@
 #endif
 
 #ifndef    JUCE_JACK
- //#define JUCE_JACK
+ #define   JUCE_JACK 1
 #endif
 
 #ifndef    JUCE_USE_ANDROID_OPENSLES
