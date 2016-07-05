@@ -16,7 +16,8 @@
 #include "ReportCreatorWindow.h"
 
 class ReportPrepScreen: public Component,
-                        public Timer
+                        public Timer,
+                        public VCOTuner::Listener
 {
 public:
     ReportPrepScreen(VCOTuner* t, Visualizer* v, ReportCreatorWindow* p);
@@ -24,6 +25,8 @@ public:
     
     void timerCallback() override;
     void paint(Graphics& g) override;
+    
+    virtual void tunerStopped() override;
     
 private:
     VCOTuner* tuner;
