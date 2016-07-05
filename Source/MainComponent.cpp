@@ -227,7 +227,8 @@ void MainComponent::comboBoxChanged (ComboBox* comboBoxThatHasChanged)
 void MainComponent::showAudioSettings()
 {
     class SettingsWrapperComponent: public Component,
-                                    public ComboBox::Listener
+                                    public ComboBox::Listener,
+                                    public TextButton::Listener
     {
     public:
         SettingsWrapperComponent(VCOTuner* tuner, AudioDeviceManager& m)
@@ -251,6 +252,10 @@ void MainComponent::showAudioSettings()
                 channelEdit.setSelectedId(1);
             addAndMakeVisible(&channelEdit);
             
+            close.setButtonText("Close");
+            close.addListener(this);
+            addAndMakeVisible(&close);
+            
             addAndMakeVisible(&selectorComponent);
         }
         
@@ -266,21 +271,32 @@ void MainComponent::showAudioSettings()
             const int height = selectorComponent.getItemHeight();
             const int border = 10;
             
-            selectorComponent.setBounds(0, 0, getWidth(), getHeight() - 2*border - height);
+            selectorComponent.setBounds(0, 0, getWidth(), getHeight() - 4*border - 2*height);
             // selectorComponent overwrites its height in its resized() function. But it doesnt seem to work
             channelEdit.setBounds(proportionOfWidth (0.35f), selectorComponent.getBottom() + border, proportionOfWidth (0.6f), height);
             channelLabel.setBounds(0, selectorComponent.getBottom() + border, proportionOfWidth (0.35f), height);
+            close.setBounds(border, getHeight() - border - height, getWidth() - 2*border, height);
+        }
+        
+        void buttonClicked (Button* bttn) override
+        {
+            if (bttn == &close)
+            {
+                if (DialogWindow* dw = findParentComponentOfClass<DialogWindow>())
+                    dw->exitModalState (0);
+            }
         }
         
     private:
         AudioDeviceSelectorComponent selectorComponent;
         Label channelLabel;
+        TextButton close;
         ComboBox channelEdit;
         VCOTuner* t;
     };
     
     SettingsWrapperComponent content(&tuner, deviceManager);
-    content.setSize(400, 380);
+    content.setSize(400, 410);
     
     
     DialogWindow::LaunchOptions o;
