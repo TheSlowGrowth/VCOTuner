@@ -86,10 +86,9 @@ void VCOTuner::startSingleMeasurement(int pitch)
         switchState(stopped);
     
     singleMeasurementPitch = pitch;
-    trySendMidiNoteOn(singleMeasurementPitch);
     singleMeasurementResult = -1;
     
-    switchState(singleMeasurement);
+    switchState(prepareSingleMeasurement);
 }
 
 StringArray VCOTuner::getLastErrors()
