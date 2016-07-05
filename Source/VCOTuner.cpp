@@ -637,11 +637,11 @@ String VCOTuner::getStatusString() const
     }
 }
 
-const String VCOTuner::Errors::highJitter = "The pitch on the audio input is not stable. This can be due to excessive jitter or a frequency modulation on the oscillator. Please note that the recognition only works for 'simple' waveforms with two zero-crossings per cycle. Please choose Saw, Triangle, Sine, Pulse, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source.";
+const String VCOTuner::Errors::highJitter = "There are zero crossings in the incoming signal but they don't seem to be coming in at a constant rate. Are you sure you're recording on the correct channel? Please use only primitive waveforms (saw, square, triangle, sine, ...) without any other processing such as delays, reverbs, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source. Or when you have dropouts (aka clicks and pops) in your audio.";
 
 const String VCOTuner::Errors::noZeroCrossings = "The incoming audio signal does not seem to contain any zero-crossings. Are you sure the oscillator signal is getting through to us? Check your audio device settings.";
 
-const String VCOTuner::Errors::highJitterTimeOut = "There are some zero crossings in the incoming signal but they don't seem to be coming in at a constant rate. Are you sure you're recording on the correct channel? Please use only primitive waveforms (saw, square, triangle, sine, ...) without other processing such as delays, reverbs, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source.";
+const String VCOTuner::Errors::highJitterTimeOut = "Timeout. " + highJitter;
 
 const String VCOTuner::Errors::stableTimeout = "There are some zero crossings in the incoming signal and they seem to come in at a constant rate - but they are coming in much slower than they should be. Are you recording from the right oscillator?";
 
