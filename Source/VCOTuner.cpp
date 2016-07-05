@@ -136,7 +136,7 @@ void VCOTuner::timerCallback()
                 
                 if (lError == notStable)
                 {
-                    errors.add("The pitch on the audio input is not stable. This can be due to excessive jitter or a frequency modulation on the oscillator. Please note that the recognition only works for 'simple' waveforms with two zero-crossings per cycle. Please choose Saw, Triangle, Sine, Pulse, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source.");
+                    errors.add(Errors::highJitter);
                     switchState(stopped);
                 }
                 else
@@ -162,11 +162,11 @@ void VCOTuner::timerCallback()
             if (cycleCounter > 1000)
             {
                 if (periodLengthsHead == 0)
-                    errors.add("The incoming audio signal does not seem to contain any zero-crossings. Are you sure the oscillator signal is getting through to us? Check your audio device settings.");
+                    errors.add(Errors::noZeroCrossings);
                 else if (lError == notStable)
-                    errors.add("There are some zero crossings in the incoming signal but they don't seem to be coming in at a constant rate. Are you sure you're recording on the correct channel? Please use only primitive waveforms (saw, square, triangle, sine, ...) without other processing such as delays, reverbs, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source.");
+                    errors.add(Errors::highJitterTimeOut);
                 else
-                    errors.add("There are some zero crossings in the incoming signal and they seem to come in at a constant rate - but they are coming in much slower that they should be. Are you recording from the right oscillator? ");
+                    errors.add(Errors::stableTimeout);
                 stopMeasurement = true;
                 switchState(stopped);
                 break;
@@ -204,7 +204,7 @@ void VCOTuner::timerCallback()
 
                 if (lError == notStable)
                 {
-                    errors.add("The pitch on the audio input is not stable. This can be due to excessive jitter or a frequency modulation on the oscillator. Please note that the recognition only works for 'simple' waveforms with two zero-crossings per cycle. Please choose Saw, Triangle, Sine, Pulse, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source.");
+                    errors.add(Errors::highJitter);
                     switchState(stopped);
                 }
                 else
@@ -226,7 +226,7 @@ void VCOTuner::timerCallback()
                     {
                         if (std::abs(frequency - referenceFrequency)/referenceFrequency < 0.1)
                         {
-                            errors.add("Apparently the frequency of the oscillator is not changing between measurements. Please check if your MIDI-to-CV interface is set to MIDI channel " + String(midiChannel) + " and make sure that it is selected as the default midi output device in the audio and midi settings.");
+                            errors.add(Errors::noFrequencyChangeBetweenMeasurements);
                             switchState(stopped);
                         }
                     }
@@ -275,11 +275,11 @@ void VCOTuner::timerCallback()
             if (cycleCounter > expectedCycles)
             {
                 if (periodLengthsHead == 0)
-                    errors.add("The incoming audio signal does not seem to contain any zero-crossings. Are you sure the oscillator signal is getting through to us? Check your audio device settings.");
+                    errors.add(Errors::noZeroCrossings);
                 else if (lError == notStable)
-                    errors.add("There are some zero crossings in the incoming signal but they don't seem to be coming in at a constant rate. Are you sure you're recording on the correct channel? Please use only primitive waveforms (saw, square, triangle, sine, ...) without other processing such as delays, reverbs, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source.");
+                    errors.add(Errors::highJitterTimeOut);
                 else
-                    errors.add("There are some zero crossings in the incoming signal and they seem to come in at a constant rate - but they are coming in much slower that they should be. Are you recording from the right oscillator? ");
+                    errors.add(Errors::stableTimeout);
                 stopMeasurement = true;
                 switchState(stopped);
                 break;
@@ -369,7 +369,7 @@ void VCOTuner::timerCallback()
                 
                 if (lError == notStable)
                 {
-                    errors.add("The pitch on the audio input is not stable. This can be due to excessive jitter or a frequency modulation on the oscillator. Please note that the recognition only works for 'simple' waveforms with two zero-crossings per cycle. Please choose Saw, Triangle, Sine, Pulse, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source.");
+                    errors.add(Errors::highJitter);
                     switchState(stopped);
                 }
                 else
@@ -406,11 +406,11 @@ void VCOTuner::timerCallback()
             if (cycleCounter > 1000)
             {
                 if (periodLengthsHead == 0)
-                    errors.add("The incoming audio signal does not seem to contain any zero-crossings. Are you sure the oscillator signal is getting through to us? Check your audio device settings.");
+                    errors.add(Errors::noZeroCrossings);
                 else if (lError == notStable)
-                    errors.add("There are some zero crossings in the incoming signal but they don't seem to be coming in at a constant rate. Are you sure you're recording on the correct channel? Please use only primitive waveforms (saw, square, triangle, sine, ...) without other processing such as delays, reverbs, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source.");
+                    errors.add(Errors::highJitterTimeOut);
                 else
-                    errors.add("There are some zero crossings in the incoming signal and they seem to come in at a constant rate - but they are coming in much slower that they should be. Are you recording from the right oscillator? ");
+                    errors.add(Errors::stableTimeout);
                 stopMeasurement = true;
                 switchState(stopped);
                 break;
@@ -436,7 +436,7 @@ void VCOTuner::trySendMidiNoteOn(int pitch)
     MidiOutput* midiOut = deviceManager->getDefaultMidiOutput();
     if (midiOut == nullptr)
     {
-        errors.add("You don't have a MIDI output device selected or the selected device is not available.");
+        errors.add(Errors::noMidiDeviceAvailable);
         switchState(stopped);
         return;
     }
@@ -453,7 +453,7 @@ void VCOTuner::trySendMidiNoteOff(int pitch)
     MidiOutput* midiOut = deviceManager->getDefaultMidiOutput();
     if (midiOut == nullptr)
     {
-        errors.add("You don't have a MIDI output device selected or the selected device is not available.");
+        errors.add(Errors::noMidiDeviceAvailable);
         switchState(stopped);
         return;
     }
@@ -593,7 +593,7 @@ void VCOTuner::audioDeviceAboutToStart (AudioIODevice* device)
 void VCOTuner::audioDeviceStopped()
 {
 	if (isRunning())
-		errors.add("The audio device was stopped while the measurement was still running. Please check that the device is still powered, all cables are connected and the driver is working correctly.");
+        errors.add(Errors::audioDeviceStoppedDuringMeasurement);
 
     switchState(stopped);
 }
@@ -636,3 +636,17 @@ String VCOTuner::getStatusString() const
             break;
     }
 }
+
+const String VCOTuner::Errors::highJitter = "The pitch on the audio input is not stable. This can be due to excessive jitter or a frequency modulation on the oscillator. Please note that the recognition only works for 'simple' waveforms with two zero-crossings per cycle. Please choose Saw, Triangle, Sine, Pulse, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source.";
+
+const String VCOTuner::Errors::noZeroCrossings = "The incoming audio signal does not seem to contain any zero-crossings. Are you sure the oscillator signal is getting through to us? Check your audio device settings.";
+
+const String VCOTuner::Errors::highJitterTimeOut = "There are some zero crossings in the incoming signal but they don't seem to be coming in at a constant rate. Are you sure you're recording on the correct channel? Please use only primitive waveforms (saw, square, triangle, sine, ...) without other processing such as delays, reverbs, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source.";
+
+const String VCOTuner::Errors::stableTimeout = "There are some zero crossings in the incoming signal and they seem to come in at a constant rate - but they are coming in much slower than they should be. Are you recording from the right oscillator?";
+
+const String VCOTuner::Errors::noFrequencyChangeBetweenMeasurements = "Apparently the frequency of the oscillator is not changing between measurements. Please check if your MIDI-to-CV interface is set to the correct MIDI channel and make sure that it is selected as the default midi output device in the audio and midi settings.";
+
+const String VCOTuner::Errors::noMidiDeviceAvailable = "You don't have a MIDI output device selected or the selected device is not available.";
+
+const String VCOTuner::Errors::audioDeviceStoppedDuringMeasurement = "The audio device was stopped while the measurement was still running. Please check that the device is still powered, all cables are connected and the driver is working correctly.";

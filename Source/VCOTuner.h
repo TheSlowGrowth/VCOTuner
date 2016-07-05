@@ -183,6 +183,17 @@ private:
     int singleMeasurementPitch;
     double singleMeasurementResult;
     double singleMeasurementDeviation;
+    
+    struct Errors
+    {
+        static const String highJitter;
+        static const String noZeroCrossings;
+        static const String highJitterTimeOut;
+        static const String stableTimeout;
+        static const String noFrequencyChangeBetweenMeasurements;
+        static const String noMidiDeviceAvailable;
+        static const String audioDeviceStoppedDuringMeasurement;
+    };
 };
 
 
