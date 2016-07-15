@@ -49,6 +49,7 @@ ifeq ($(CONFIG),Release)
 endif
 
 OBJECTS := \
+  $(OBJDIR)/AutoCorrelator_905e53c1.o \
   $(OBJDIR)/MainComponent_a6ffb4a5.o \
   $(OBJDIR)/MainWindow_499ac812.o \
   $(OBJDIR)/ReportCreatorWindow_2b120c9.o \
@@ -90,6 +91,11 @@ clean:
 strip:
 	@echo Stripping VCO Tuner
 	-@strip --strip-unneeded $(OUTDIR)/$(TARGET)
+
+$(OBJDIR)/AutoCorrelator_905e53c1.o: ../../Source/AutoCorrelator.cpp
+	-@mkdir -p $(OBJDIR)
+	@echo "Compiling AutoCorrelator.cpp"
+	@$(CXX) $(CXXFLAGS) -o "$@" -c "$<"
 
 $(OBJDIR)/MainComponent_a6ffb4a5.o: ../../Source/MainComponent.cpp
 	-@mkdir -p $(OBJDIR)

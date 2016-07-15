@@ -364,6 +364,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Source\AutoCorrelator.cpp">
+      <Filter>VCO Tuner</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\MainComponent.cpp">
       <Filter>VCO Tuner</Filter>
     </ClCompile>
@@ -2115,6 +2118,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\AutoCorrelator.h">
+      <Filter>VCO Tuner</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\MainComponent.h">
       <Filter>VCO Tuner</Filter>
     </ClInclude>

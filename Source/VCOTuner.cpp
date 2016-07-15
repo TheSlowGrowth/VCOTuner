@@ -10,17 +10,20 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "VCOTuner.h"
+#include "AutoCorrelator.h"
 
 VCOTuner::VCOTuner(AudioDeviceManager* d)
 {
     state = stopped;
-    numPeriodSamples = 10;
     lowestPitch = 30;
     highestPitch = 120;
     pitchIncrement = 12;
     deviceManager = d;
     midiChannel = 1;
     currentlyPlayingMidiNote = -1;
+    startSampling = false;
+    stopSampling = false;
+    sampleBufferHead = 0;
     
     d->addChangeListener(this);
     d->addAudioCallback(this);
@@ -60,7 +63,7 @@ void VCOTuner::toggleState()
 {
     if (!isRunning())
     {
-        switchState(prepRefMeasurement);
+        switchState(prepMeasurement);
     }
     else
     {
@@ -71,7 +74,7 @@ void VCOTuner::toggleState()
 void VCOTuner::start()
 {
     if (!isRunning())
-        switchState(prepRefMeasurement);
+        switchState(prepMeasurement);
 }
 
 void VCOTuner::stop()
@@ -85,10 +88,10 @@ void VCOTuner::startSingleMeasurement(int pitch)
     if (state != stopped && state != finished)
         switchState(stopped);
     
-    singleMeasurementPitch = pitch;
+   /* singleMeasurementPitch = pitch;
     singleMeasurementResult = -1;
     
-    switchState(prepareSingleMeasurement);
+    switchState(prepareSingleMeasurement);*/
 }
 
 StringArray VCOTuner::getLastErrors()
@@ -104,194 +107,185 @@ void VCOTuner::timerCallback()
     {
         case stopped:
             break;
-        case prepRefMeasurement:
-            if (cycleCounter == 0)
-            {
-                // send reference midi note
-                referencePitch = (highestPitch + lowestPitch) / 2;
-                currentPitch = referencePitch;
-                trySendMidiNoteOn(currentPitch);
-            }
-            else
-            {
-                // after 100ms, we expect the oscillator to be settled at the new pitch
-                // (gives some safety margin for audio/midi interface latency)
-                if (cycleCounter >= 10)
-                {
-                    // start a measurement and see if we get a stable pitch here
-                    startMeasurement = true;
-                    switchState(refMeasurement);
-                    break;
-                }
-            }
-            cycleCounter++;
-            break;
-        case refMeasurement:
-        {
-            // measurement done
-            if (!startMeasurement)
-            {
-                // send note off
-                trySendMidiNoteOff(currentPitch);
-                
-                if (lError == notStable)
-                {
-                    errors.add(Errors::highJitter);
-                    switchState(stopped);
-                }
-                else
-                {
-                    // calculate frequency
-                    int numMeasurements = periodLengthsHead - indexOfFirstValidPeriodLength;
-                    int accumulator = 0;
-                    for (int i = indexOfFirstValidPeriodLength; i < periodLengthsHead; i++)
-                        accumulator += periodLengths[i];
-                    
-                    double averagePeriod = (double) accumulator / (double) numMeasurements;
-                    
-                    referenceFrequency = sampleRate / averagePeriod;
-                    
-                    // prepare next measurement
-                    currentPitch = lowestPitch;
-                    currentIndex = 0;
-                    switchState(prepMeasurement);
-                    break;
-                }
-            }
-
-            if (cycleCounter > 1000)
-            {
-                if (periodLengthsHead == 0)
-                    errors.add(Errors::noZeroCrossings);
-                else if (lError == notStable)
-                    errors.add(Errors::highJitterTimeOut);
-                else
-                    errors.add(Errors::stableTimeout);
-                stopMeasurement = true;
-                switchState(stopped);
-                break;
-            }
-            cycleCounter++;
-            break;
-        }
         case prepMeasurement:
+            // wait for low level state machine to stop sampling
+            if (stopSampling)
+                break;
+            
+            // send midi note and start measuring
             if (cycleCounter == 0)
+                trySendMidiNoteOn(69);
+            
+            // after 100ms start sampling
+            if (cycleCounter*getTimerInterval() >= 100)
             {
-                // send midi note
-                trySendMidiNoteOn(currentPitch);
-            }
-            else
-            {
-                // after 100ms, we expect the oscillator to be settled at the new pitch
-                // (gives some safety margin for audio/midi interface latency)
-                if (cycleCounter >= 10)
-                {
-                    // start a measurement and see if we get a stable pitch here
-                    startMeasurement = true;
-                    switchState(measurement);
-                    break;
-                }
+                startSampling = true;
+                switchState(sampleInput);
             }
             cycleCounter++;
             break;
-        case measurement:
-        {
-            // measurement done
-            if (!startMeasurement)
+        case sampleInput:
+            cycleCounter++;
+            if (!startSampling)
             {
-                // send note off
-                trySendMidiNoteOff(currentPitch);
-
-                if (lError == notStable)
+                trySendMidiNoteOff(currentlyPlayingMidiNote);
+                switchState(processSkim);
+            }
+            break;
+        case processSkim:
+        {
+            // find gain for normalizing
+            Range<float> minMax = sampleBuffer.findMinMax(0, 0, sampleBuffer.getNumSamples());
+            float gain = 1 / jmax(-minMax.getStart(), minMax.getEnd());
+            sampleBuffer.applyGain(gain);
+            
+            double absMaximum = AutoCorrelator::calculate(sampleBuffer, 0);
+            
+            typedef struct {
+                double tau_start;
+                double tau_end;
+                double tau_maximum;
+                double maximum;
+            } Region;
+            Array<Region> regions;
+            Region currentRegion;
+            currentRegion.maximum = 0;
+            bool rangeEntered = false;
+            bool firstMaximumPassed = false;
+            
+            // skim over the data and find regions with an auto correlation > 0.8*absolute maximum value
+            double threshold = 0.8 * absMaximum;
+            for (int i = 0; i < sampleBuffer.getNumSamples()/2; i++)
+            {
+                double result = AutoCorrelator::calculate(sampleBuffer, i);
+                if (result > threshold && !rangeEntered && firstMaximumPassed)
                 {
-                    errors.add(Errors::highJitter);
-                    switchState(stopped);
+                    currentRegion.tau_start = i;
+                    rangeEntered = true;
                 }
-                else
+                else if (rangeEntered)
                 {
-                    // calculate frequency
-                    int numMeasurements = periodLengthsHead - indexOfFirstValidPeriodLength;
-                    int accumulator = 0;
-                    for (int i = indexOfFirstValidPeriodLength; i < periodLengthsHead; i++)
-                        accumulator += periodLengths[i];
-                    
-                    double averagePeriod = (double) accumulator / (double) numMeasurements;
-                    
-                    double frequency = sampleRate / averagePeriod;
-                    double pitch = 12.0 * log(frequency / referenceFrequency) / log(2.0) + referencePitch;
-                    
-                    // check if the frequency has changed compared to the reference frequency
-                    // if not, it is likely that the MIDI output is not working. Do this only for the very first measurement
-                    if (currentIndex == 0)
+                    if (result < threshold)
                     {
-                        if (std::abs(frequency - referenceFrequency)/referenceFrequency < 0.1)
-                        {
-                            errors.add(Errors::noFrequencyChangeBetweenMeasurements);
-                            switchState(stopped);
-                        }
+                        rangeEntered = false;
+                        currentRegion.tau_end = i;
+                        regions.add(currentRegion);
+                        currentRegion.maximum = 0;
                     }
-                    
-                    // estimate deviation of frequency and pitch
-                    double fAccumulator = 0;
-                    double pAccumulator = 0;
-                    for (int i = indexOfFirstValidPeriodLength; i < periodLengthsHead; i++)
+                    else if (result > currentRegion.maximum)
                     {
-                        double f = sampleRate / (double) periodLengths[i];
-                        fAccumulator += pow(f - frequency, 2);
-                        pAccumulator += pow(12.0 * log(f / referenceFrequency) / log(2.0) + referencePitch - pitch, 2);
+                        currentRegion.tau_maximum = i;
+                        currentRegion.maximum = result;
                     }
-                    fAccumulator = fAccumulator / (numMeasurements - 1);
-                    pAccumulator = pAccumulator / (numMeasurements - 1);
-                    double fDeviation = sqrt(fAccumulator);
-                    double pDeviation = sqrt(pAccumulator);
-                    
-                    measurement_t m;
-                    m.timestamp = Time::getCurrentTime();
-                    m.frequency = frequency;
-                    m.pitch = pitch;
-                    m.midiPitch = currentPitch;
-                    m.pitchOffset = pitch - currentPitch;
-                    m.freqDeviation = fDeviation;
-                    m.pitchDeviation = pDeviation;
-                    m.numMeasurements = numMeasurements;
-                    listeners.call(&Listener::newMeasurementReady, m);
-                    
-                    // prepare next measurement
-                    currentPitch += pitchIncrement;
-                    currentIndex++;
-                    
-                    if (currentPitch <= highestPitch)
-                        switchState(prepMeasurement);
-                    else
-                        switchState(finished);
+                }
+                // to avoid indexing the maximum at tau == 0!
+                else if (!firstMaximumPassed && result <= threshold)
+                    firstMaximumPassed = true;
+                
+                if (regions.size() >= 2)
                     break;
-                }
+            }
+            /*
+            Image imgS(Image::PixelFormat::RGB, sampleBuffer.getNumSamples()/20, 300, true);
+            Graphics gS(imgS);
+            gS.fillAll(Colours::white);
+            gS.setColour(Colours::black);
+            Range<float> waveformMax = sampleBuffer.findMinMax(0, 0, sampleBuffer.getNumSamples());
+            for (int i = 0; i < sampleBuffer.getNumSamples()/10; i++)
+            {
+                double value = sampleBuffer.getSample(0, i);
+                double y = (1 - (value - waveformMax.getStart())/(waveformMax.getLength()))*imgS.getHeight();
+                gS.setPixel(i, y);
+            }
+            File("~/waveform.png").deleteFile();
+            FileOutputStream streamS(File("~/waveform.png"));
+            PNGImageFormat formatS;
+            if (!formatS.writeImageToStream(imgS, streamS))
+            {
+                NativeMessageBox::showMessageBox(AlertWindow::WarningIcon, "Error!", "Error writing the image file!");
             }
             
-            float expectedFrequency = referenceFrequency * pow(2,((float) currentPitch - (float) referencePitch)/12.0);
-            float expectedTime = 1.0 / (float) expectedFrequency * numPeriodSamples;
-            expectedTime *= 2;
-            int expectedCycles = expectedTime * 100;
-            if (cycleCounter > expectedCycles)
+            Image img(Image::PixelFormat::RGB, sampleBuffer.getNumSamples()/20, 300, true);
+            Graphics g(img);
+            g.fillAll(Colours::white);
+            g.setColour(Colours::black);
+            for (int i = 0; i < sampleBuffer.getNumSamples()/2; i++)
             {
-                if (periodLengthsHead == 0)
-                    errors.add(Errors::noZeroCrossings);
-                else if (lError == notStable)
-                    errors.add(Errors::highJitterTimeOut);
-                else
-                    errors.add(Errors::stableTimeout);
-                stopMeasurement = true;
-                switchState(stopped);
-                break;
+                double value = AutoCorrelator::calculate(sampleBuffer, i);
+                double y = (1 - value/absMaximum)*img.getHeight();
+                g.setPixel(i, y);
+            }
+            File("~/correlation.png").deleteFile();
+            FileOutputStream stream(File("~/correlation.png"));
+            PNGImageFormat format;
+            if (!format.writeImageToStream(img, stream))
+            {
+                NativeMessageBox::showMessageBox(AlertWindow::WarningIcon, "Error!", "Error writing the image file!");
+            }*/
+            
+            
+            // ==== iteratively scan the data to find its true maximum ====
+            // analyse two data points on both sides of the current maximum
+            // take the higher one as the next maximum
+            // decrease step size whenever direction changes or when both sides are lower
+            // than the current maximum.
+            // stop when stepsize has reached a lower bound
+            // do this for each region that was previously found.
+            for (int i = 0; i < regions.size(); i++)
+            {
+                double h = 0.8;
+                double result_tau = AutoCorrelator::calculate(sampleBuffer, regions[i].tau_maximum);
+                bool isIncreasing = true;
+                
+                while (h > 0.0000001)
+                {
+                    double result_tau_plus =  AutoCorrelator::calculate(sampleBuffer, regions[i].tau_maximum + h);
+                    double result_tau_minus = AutoCorrelator::calculate(sampleBuffer, regions[i].tau_maximum - h);
+                    
+                    if (result_tau_plus > result_tau_minus && result_tau_plus > result_tau)
+                    {
+                        regions.getReference(i).tau_maximum = regions[i].tau_maximum + h;
+                        result_tau = result_tau_plus;
+                        if (!isIncreasing)
+                        {
+                            isIncreasing = true;
+                            h = h * 0.8;
+                        }
+                        continue;
+                    }
+                    else if (result_tau_minus > result_tau_plus && result_tau_minus > result_tau)
+                    {
+                        regions.getReference(i).tau_maximum = regions[i].tau_maximum - h;
+                        result_tau = result_tau_minus;
+                        if (isIncreasing)
+                        {
+                            isIncreasing = false;
+                            h = h * 0.8;
+                        }
+                        continue;
+                    }
+                    else
+                    {
+                        h = h * 0.8;
+                    }
+                }
+                double frequency = sampleRate/regions[i].tau_maximum;
+                int p = 1;
+                NativeMessageBox::showMessageBoxAsync(AlertWindow::AlertIconType::InfoIcon, "Result", "Frequency = " + String(frequency) + "Hz", nullptr);
             }
             cycleCounter++;
-            break;
-        }
+            switchState(stopped);
+        } break;
+        case processFine:
+        {
+            
+            cycleCounter++;
+        } break;
         case finished:
             break;
-        case prepareContinuousFrequencyMeasurement:
+        /*case prepareContinuousFrequencyMeasurement:
         {
-            // wait for low level state machine to stop measuring
+            // wait for low level state machine to stop sampling
             if (stopMeasurement)
                 break;
                 
@@ -416,19 +410,19 @@ void VCOTuner::timerCallback()
                 break;
             }
             cycleCounter++;
-        } break;
+        } break;*/
         default:
-            state = stopped;
+            switchState(stopped);
             break;
     }
 }
 
 void VCOTuner::startContinuousMeasurement(int pitch)
 {
-    continuousFrequencyMeasurementPitch = pitch;
+    /*continuousFrequencyMeasurementPitch = pitch;
     if (state != stopped && state != finished)
         switchState(stopped);
-    state = prepareContinuousFrequencyMeasurement;
+    state = prepareContinuousFrequencyMeasurement;*/
 }
 
 void VCOTuner::trySendMidiNoteOn(int pitch)
@@ -473,87 +467,31 @@ void VCOTuner::audioDeviceIOCallback (const float** inputChannelData,
         return;
     const AudioBuffer<const float> inputBuffer(inputChannelData, numInputChannels, numSamples);
 
-    if (stopMeasurement)
+    if (stopSampling)
     {
-        startMeasurement = false;
-        stopMeasurement = false;
-        initialized = false;
+        startSampling = false;
+        stopSampling = false;
+        sampleBufferHead = 0;
     }
     
-    if (startMeasurement)
+    if (startSampling)
     {
-        // check if measurement was initialized
-        if (!initialized)
+        int numToWrite = numSamples;
+        bool stop = false;
+        
+        if (sampleBufferHead + numSamples > sampleBuffer.getNumSamples())
         {
-            lError = noError;
-            sampleCounter = 0;
-            lastZeroCrossing = -1;
-            indexOfFirstValidPeriodLength = -1;
-            periodLengthsHead = 0;
-            initialized = true;
+            numToWrite = sampleBuffer.getNumSamples() - sampleBufferHead;
+            stop = true;
         }
         
-        // try to find a zero crossing (- => +)
-        for (int i = 0; i < numSamples; i++)
+        sampleBuffer.copyFrom(0, sampleBufferHead, inputChannelData[0], numToWrite);
+        sampleBufferHead += numToWrite;
+
+        if (stop)
         {
-            float currentSample = inputBuffer.getSample(0, i);
-            if (lastSample < 0 && currentSample >= 0)
-            {
-                if (periodLengthsHead >= maxNumPeriodLengths)
-                    break;
-                
-                periodLengths[periodLengthsHead++] = sampleCounter - lastZeroCrossing;
-                lastZeroCrossing = sampleCounter;                
-            }
-            lastSample = currentSample;
-            sampleCounter++;
-        }
-        
-        // see if the period length is stable
-        if (periodLengthsHead > 5 && indexOfFirstValidPeriodLength < 0)
-        {
-            int sum = 0;
-            for (int i = periodLengthsHead - 5; i < periodLengthsHead; i++)
-            {
-                sum += periodLengths[i];
-            }
-            float average = (float) sum / 5.0;
-            
-            bool okay = true;
-            float boundary = average * 0.1; // max 10% error allowed
-            for (int i = periodLengthsHead - 5; i < periodLengthsHead; i++)
-            {
-                if (std::abs((float) periodLengths[i] - average) >= boundary)
-                    okay = false;
-            }
-            
-            if (okay)
-            {
-                indexOfFirstValidPeriodLength = periodLengthsHead;
-            }
-        }
-        
-        // finish measurement when the required number of valid measurements are made
-        int numMeasurements = periodLengthsHead - indexOfFirstValidPeriodLength;
-        if ((indexOfFirstValidPeriodLength > 0) && (numMeasurements > numPeriodSamples))
-        {
-            lError = noError;
-            initialized = false;
-            startMeasurement = false;
-        }
-        // the pitch hasn't stabilized yet.
-        // assign the notStable error prematurely, just in case the top level statemachine rans into
-        // a timeout and wants to know whats going on.
-        else if (indexOfFirstValidPeriodLength < 0)
-        {
-            lError = notStable;
-            
-            // ran out of recording space => period length too jittery or does change constantly - stop here.
-            if ((periodLengthsHead >= maxNumPeriodLengths))
-            {
-                initialized = false;
-                startMeasurement = false;
-            }
+            startSampling = false;
+            sampleBufferHead = 0;
         }
     }
 
@@ -572,10 +510,10 @@ void VCOTuner::switchState(VCOTuner::State newState)
     {
         if (currentlyPlayingMidiNote >= 0 && currentlyPlayingMidiNote < 128)
             trySendMidiNoteOff(currentlyPlayingMidiNote);
-        stopMeasurement = true;
+        stopSampling = true;
         listeners.call(&Listener::tunerStopped);
     }
-    else if (newState == prepRefMeasurement)
+    else if (newState == prepMeasurement)
         listeners.call(&Listener::tunerStarted);
     else if (newState == finished)
         listeners.call(&Listener::tunerFinished);
@@ -587,6 +525,8 @@ void VCOTuner::switchState(VCOTuner::State newState)
 void VCOTuner::audioDeviceAboutToStart (AudioIODevice* device)
 {
     sampleRate = device->getCurrentSampleRate();
+    sampleBuffer.setSize(1, sampleRate*2.0); //2s sample data
+    correlationSkimResults.ensureStorageAllocated(sampleBuffer.getNumSamples());
 }
 
 /** inherited from AudioIODeviceCallback */
@@ -608,7 +548,7 @@ void VCOTuner::changeListenerCallback (ChangeBroadcaster* source)
 
 String VCOTuner::getStatusString() const 
 {
-    switch(state)
+  /*  switch(state)
     {
         case stopped:
             return "Stopped.";
@@ -634,7 +574,8 @@ String VCOTuner::getStatusString() const
         default:
             return "";
             break;
-    }
+    }*/
+    return "nothing here.";
 }
 
 const String VCOTuner::Errors::highJitter = "There are zero crossings in the incoming signal but they don't seem to be coming in at a constant rate. Are you sure you're recording on the correct channel? Please use only primitive waveforms (saw, square, triangle, sine, ...) without any other processing such as delays, reverbs, etc. This error typically appears when you are accidentally recording the signal from a microphone or another sound source. Or when you have dropouts (aka clicks and pops) in your audio.";

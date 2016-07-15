@@ -34,8 +34,8 @@ public:
     void setMidiChannel(int channel) { midiChannel = channel; }
     int  getMidiChannel() const { return midiChannel; }
     
-    void setResolution(int numCyclesPerNote) { numPeriodSamples = numCyclesPerNote; }
-    int getResolution() { return numPeriodSamples; }
+    void setResolution(int numCyclesPerNote) { /*numPeriodSamples = numCyclesPerNote;*/ }
+    int getResolution() { return 0; /* numPeriodSamples; */ }
     
     double getCurrentSampleRate() { return sampleRate; }
     double getReferenceFrequency() { return referenceFrequency; }
@@ -44,10 +44,10 @@ public:
     String getStatusString()const;
     
     void startContinuousMeasurement(int pitch);
-    double getContinuousMesurementResult() const { return continuousFreqMeasurementResult; }
+    double getContinuousMesurementResult() const { return 0; /* continuousFreqMeasurementResult;*/ }
     
     void startSingleMeasurement(int pitch);
-    double getSingleMeasurementResult() const { return singleMeasurementResult; }
+    double getSingleMeasurementResult() const { return 0; /* singleMeasurementResult; */ }
     
     /** holds all properties of a single measurements */
     typedef struct
@@ -101,15 +101,11 @@ private:
     enum State
     {
         stopped,
-        prepRefMeasurement,
-        refMeasurement,
         prepMeasurement,
-        measurement,
-        finished,
-        prepareContinuousFrequencyMeasurement,
-        continuousFrequencyMeasurement,
-        prepareSingleMeasurement,
-        singleMeasurement
+        sampleInput,
+        processSkim,
+        processFine,
+        finished
     };
     
     ListenerList<Listener> listeners;
@@ -123,14 +119,6 @@ private:
     
     // counts cycles since the last state transition
     int cycleCounter;
-
-    
-    /** error message from the audio thread */
-    enum LowLevelError
-    {
-        noError = 0,
-        notStable // frequency not stable (= too much jitter)
-    };
     
     /** lowest pitch to be measured */
     int lowestPitch;
@@ -156,33 +144,19 @@ private:
     /** state of the state machine */
     State state;
     
-    
     /** the following must only be accessed from the message thread, when startMeasurement == false and
      be accessed from the audio thread, when startMeasurement == true */
-    bool startMeasurement; // set by message thread, reset by audio thread.
-    bool stopMeasurement;  // set by message thread, reset by audio thread.
-    static const int maxNumPeriodLengths = 600;
-    int periodLengths[maxNumPeriodLengths]; // all measured period lengths of this measurement
-    int numPeriodSamples; // number of periods to measure before averaging
-    int indexOfFirstValidPeriodLength; // the index in periodLengths[] at which the system has reached a stable frequency
-                                       // this is also the first valid period length measurement that is included in the result
-    int periodLengthsHead;
-    LowLevelError lError; // holds error message from the audio thread
+    bool startSampling; // set by message thread, reset by audio thread.
+    bool stopSampling;  // set by message thread, reset by audio thread.
+    
+    AudioSampleBuffer sampleBuffer;
+    Array<double> correlationSkimResults;
     
     /** the following are only to be accessed from the audio thread */
-    int sampleCounter; // counts samples since the start of a measurement
-    int lastZeroCrossing; // holds the sample counters value of the last zero corssing (- => +)
+    int sampleBufferHead;
     float lastSample;
     double sampleRate;
     bool initialized;
-    
-    int continuousFrequencyMeasurementPitch;
-    double continuousFreqMeasurementResult;
-    double continuousFreqMeasurementDeviation;
-    
-    int singleMeasurementPitch;
-    double singleMeasurementResult;
-    double singleMeasurementDeviation;
     
     struct Errors
     {

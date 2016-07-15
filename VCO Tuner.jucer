@@ -128,6 +128,10 @@
     </VS2015>
   </EXPORTFORMATS>
   <MAINGROUP id="YdWL7hi7p" name="VCO Tuner">
+    <FILE id="bUmx74" name="AutoCorrelator.cpp" compile="1" resource="0"
+          file="Source/AutoCorrelator.cpp"/>
+    <FILE id="ZHxcCU" name="AutoCorrelator.h" compile="0" resource="0"
+          file="Source/AutoCorrelator.h"/>
     <FILE id="lZaVui" name="MainComponent.cpp" compile="1" resource="0"
           file="Source/MainComponent.cpp"/>
     <FILE id="m1LOnI" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
