@@ -41,8 +41,8 @@
 namespace ProjectInfo
 {
     const char* const  projectName    = "VCO Tuner";
-    const char* const  versionString  = "";
-    const int          versionNumber  = 0x0;
+    const char* const  versionString  = "0.2.4";
+    const int          versionNumber  = 0x204;
 }
 #endif
 

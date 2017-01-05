@@ -38,7 +38,7 @@ public:
         PropertiesFile::Options options;
         options.applicationName     = "VCO Tuner Application";
         options.filenameSuffix      = "settings";
-        options.osxLibrarySubFolder = "Preferences";
+        options.osxLibrarySubFolder = "Application Support";
 
         appProperties = new ApplicationProperties();
         appProperties->setStorageParameters (options);
