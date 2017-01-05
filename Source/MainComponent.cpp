@@ -227,7 +227,8 @@ void MainComponent::comboBoxChanged (ComboBox* comboBoxThatHasChanged)
 void MainComponent::showAudioSettings()
 {
     class SettingsWrapperComponent: public Component,
-                                    public ComboBox::Listener
+                                    public ComboBox::Listener,
+                                    public TextButton::Listener
     {
     public:
         SettingsWrapperComponent(VCOTuner* tuner, AudioDeviceManager& m)
@@ -251,6 +252,10 @@ void MainComponent::showAudioSettings()
                 channelEdit.setSelectedId(1);
             addAndMakeVisible(&channelEdit);
             
+            close.setButtonText("Close");
+            close.addListener(this);
+            addAndMakeVisible(&close);
+            
             addAndMakeVisible(&selectorComponent);
         }
         
@@ -266,21 +271,32 @@ void MainComponent::showAudioSettings()
             const int height = selectorComponent.getItemHeight();
             const int border = 10;
             
-            selectorComponent.setBounds(0, 0, getWidth(), getHeight() - 2*border - height);
+            selectorComponent.setBounds(0, 0, getWidth(), getHeight() - 4*border - 2*height);
             // selectorComponent overwrites its height in its resized() function. But it doesnt seem to work
             channelEdit.setBounds(proportionOfWidth (0.35f), selectorComponent.getBottom() + border, proportionOfWidth (0.6f), height);
             channelLabel.setBounds(0, selectorComponent.getBottom() + border, proportionOfWidth (0.35f), height);
+            close.setBounds(border, getHeight() - border - height, getWidth() - 2*border, height);
+        }
+        
+        void buttonClicked (Button* bttn) override
+        {
+            if (bttn == &close)
+            {
+                if (DialogWindow* dw = findParentComponentOfClass<DialogWindow>())
+                    dw->exitModalState (0);
+            }
         }
         
     private:
         AudioDeviceSelectorComponent selectorComponent;
         Label channelLabel;
+        TextButton close;
         ComboBox channelEdit;
         VCOTuner* t;
     };
     
     SettingsWrapperComponent content(&tuner, deviceManager);
-    content.setSize(400, 380);
+    content.setSize(400, 410);
     
     
     DialogWindow::LaunchOptions o;
@@ -378,5 +394,5 @@ const char* MainComponent::resolutionsTexts[numResolutions] = {
 
 const MainComponent::regime_t MainComponent::reportRange = {24, 96, 1};
 
-const String MainComponent::welcomeText = String("Welcome to the VCO Tuner!") + newLine + newLine + "Please follow these steps to get running:" + newLine + "1) connect a MIDI-CV interface to your Computer" + newLine + "2) connect the CV output of the interface to your oscillators frequency input" + newLine + "3) Connect one of the oscillators basic wavaforms (sine, saw, triangle, pulse, etc.) directly to your soundcard." + newLine + newLine + "When you close this dialog, the audio settings panel will open. Please select your audio and midi device there." + newLine + newLine + "Have fun!" + newLine + newLine + "PS: If you find any bugs, please raise an issue on the github repository under https://github.com/TheSlowGrowth/VCOTuner. Thanks!";
+const String MainComponent::welcomeText = String("Welcome to the VCO Tuner!") + newLine + newLine + "Please follow these steps to get running:" + newLine + "1) connect a MIDI-CV interface to your Computer" + newLine + "2) connect the CV output of the interface to your oscillators frequency input" + newLine + "3) Connect one of the oscillators basic waveforms (sine, saw, triangle, pulse, etc.) directly to your soundcard (use attenuation to avoid clipping)." + newLine + newLine + "When you close this dialog, the audio settings panel will open. Please select your audio and midi device there." + newLine + newLine + "Have fun!" + newLine + newLine + "PS: If you find bugs, please raise an issue on the github repository under https://github.com/TheSlowGrowth/VCOTuner. Thanks!";
 

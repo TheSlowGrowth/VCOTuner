@@ -7,7 +7,7 @@
 #include <windows.h>
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION  0,0,0,0
+FILEVERSION  0,2,4,0
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
@@ -15,7 +15,9 @@ BEGIN
     BEGIN
       VALUE "CompanyName",  "Johannes Elliesen\0"
       VALUE "FileDescription",  "VCO Tuner\0"
+      VALUE "FileVersion",  "0.2.4\0"
       VALUE "ProductName",  "VCO Tuner\0"
+      VALUE "ProductVersion",  "0.2.4\0"
     END
   END
 

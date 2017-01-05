@@ -143,11 +143,11 @@ void VCOTuner::timerCallback()
                 {
                     // calculate frequency
                     int numMeasurements = periodLengthsHead - indexOfFirstValidPeriodLength;
-                    int accumulator = 0;
+                    double accumulator = 0;
                     for (int i = indexOfFirstValidPeriodLength; i < periodLengthsHead; i++)
                         accumulator += periodLengths[i];
                     
-                    double averagePeriod = (double) accumulator / (double) numMeasurements;
+                    double averagePeriod = accumulator / (double) numMeasurements;
                     
                     referenceFrequency = sampleRate / averagePeriod;
                     
@@ -211,7 +211,7 @@ void VCOTuner::timerCallback()
                 {
                     // calculate frequency
                     int numMeasurements = periodLengthsHead - indexOfFirstValidPeriodLength;
-                    int accumulator = 0;
+                    double accumulator = 0;
                     for (int i = indexOfFirstValidPeriodLength; i < periodLengthsHead; i++)
                         accumulator += periodLengths[i];
                     
@@ -308,7 +308,7 @@ void VCOTuner::timerCallback()
             {
                 // calculate frequency
                 int numMeasurements = periodLengthsHead - indexOfFirstValidPeriodLength;
-                int accumulator = 0;
+                double accumulator = 0;
                 for (int i = indexOfFirstValidPeriodLength; i < periodLengthsHead; i++)
                     accumulator += periodLengths[i];
                 
@@ -376,7 +376,7 @@ void VCOTuner::timerCallback()
                 {
                     // calculate frequency
                     int numMeasurements = periodLengthsHead - indexOfFirstValidPeriodLength;
-                    int accumulator = 0;
+                    double accumulator = 0;
                     for (int i = indexOfFirstValidPeriodLength; i < periodLengthsHead; i++)
                         accumulator += periodLengths[i];
                     
@@ -502,8 +502,16 @@ void VCOTuner::audioDeviceIOCallback (const float** inputChannelData,
                 if (periodLengthsHead >= maxNumPeriodLengths)
                     break;
                 
-                periodLengths[periodLengthsHead++] = sampleCounter - lastZeroCrossing;
-                lastZeroCrossing = sampleCounter;                
+                // interpolate line between the sample before and after the crossing
+                // y = mx + n
+                double m = (lastSample - currentSample);
+                double n = lastSample - m*(sampleCounter);
+                
+                // zero crossing of interpolated line: y = 0 => x0 = -n/m
+                double zeroCrossingPos = -n / m;
+                
+                periodLengths[periodLengthsHead++] = zeroCrossingPos - lastZeroCrossing;
+                lastZeroCrossing = zeroCrossingPos;                
             }
             lastSample = currentSample;
             sampleCounter++;
@@ -512,18 +520,18 @@ void VCOTuner::audioDeviceIOCallback (const float** inputChannelData,
         // see if the period length is stable
         if (periodLengthsHead > 5 && indexOfFirstValidPeriodLength < 0)
         {
-            int sum = 0;
+            double sum = 0;
             for (int i = periodLengthsHead - 5; i < periodLengthsHead; i++)
             {
                 sum += periodLengths[i];
             }
-            float average = (float) sum / 5.0;
+            double average = sum / 5.0;
             
             bool okay = true;
-            float boundary = average * 0.1; // max 10% error allowed
+            double boundary = average * 0.1; // max 10% error allowed
             for (int i = periodLengthsHead - 5; i < periodLengthsHead; i++)
             {
-                if (std::abs((float) periodLengths[i] - average) >= boundary)
+                if (std::abs(periodLengths[i] - average) >= boundary)
                     okay = false;
             }
             
@@ -542,7 +550,7 @@ void VCOTuner::audioDeviceIOCallback (const float** inputChannelData,
             startMeasurement = false;
         }
         // the pitch hasn't stabilized yet.
-        // assign the notStable error prematurely, just in case the top level statemachine rans into
+        // assign the notStable error prematurely, just in case the top level statemachine runs into
         // a timeout and wants to know whats going on.
         else if (indexOfFirstValidPeriodLength < 0)
         {

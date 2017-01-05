@@ -162,7 +162,7 @@ private:
     bool startMeasurement; // set by message thread, reset by audio thread.
     bool stopMeasurement;  // set by message thread, reset by audio thread.
     static const int maxNumPeriodLengths = 600;
-    int periodLengths[maxNumPeriodLengths]; // all measured period lengths of this measurement
+    double periodLengths[maxNumPeriodLengths]; // all measured period lengths of this measurement
     int numPeriodSamples; // number of periods to measure before averaging
     int indexOfFirstValidPeriodLength; // the index in periodLengths[] at which the system has reached a stable frequency
                                        // this is also the first valid period length measurement that is included in the result
@@ -171,7 +171,7 @@ private:
     
     /** the following are only to be accessed from the audio thread */
     int sampleCounter; // counts samples since the start of a measurement
-    int lastZeroCrossing; // holds the sample counters value of the last zero corssing (- => +)
+    double lastZeroCrossing; // holds the sample counters value of the last zero corssing (- => +)
     float lastSample;
     double sampleRate;
     bool initialized;
