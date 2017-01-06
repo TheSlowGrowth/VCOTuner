@@ -25,11 +25,10 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "MainWindow.h"
 #include "MainComponent.h"
-#include "VersionInfo.h"
 
 //==============================================================================
 MainWindow::MainWindow()
-    : DocumentWindow (JUCEApplication::getInstance()->getApplicationName() + " " + versionString, Colours::lightgrey,
+: DocumentWindow (JUCEApplication::getInstance()->getApplicationName() + " v" + String(ProjectInfo::versionString), Colours::lightgrey,
                       DocumentWindow::allButtons)
 {
     setResizable (true, false);

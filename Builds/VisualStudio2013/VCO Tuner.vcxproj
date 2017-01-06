@@ -1717,7 +1717,6 @@
     <ClInclude Include="..\..\Source\ReportPrepScreen.h"/>
     <ClInclude Include="..\..\Source\ReportProperties.h"/>
     <ClInclude Include="..\..\Source\VCOTuner.h"/>
-    <ClInclude Include="..\..\Source\VersionInfo.h"/>
     <ClInclude Include="..\..\Source\Visualizer.h"/>
     <ClInclude Include="..\..\JuceLibraryCode\modules\juce_audio_basics\buffers\juce_AudioDataConverters.h"/>
     <ClInclude Include="..\..\JuceLibraryCode\modules\juce_audio_basics\buffers\juce_AudioSampleBuffer.h"/>
