@@ -157,7 +157,6 @@
     <FILE id="nehnGjkrX" name="Startup.cpp" compile="1" resource="0" file="Source/Startup.cpp"/>
     <FILE id="vyCHyw" name="VCOTuner.cpp" compile="1" resource="0" file="Source/VCOTuner.cpp"/>
     <FILE id="b00cHG" name="VCOTuner.h" compile="0" resource="0" file="Source/VCOTuner.h"/>
-    <FILE id="icgGFC" name="VersionInfo.h" compile="0" resource="0" file="Source/VersionInfo.h"/>
     <FILE id="u8iyuo" name="Visualizer.cpp" compile="1" resource="0" file="Source/Visualizer.cpp"/>
     <FILE id="wiu4tT" name="Visualizer.h" compile="0" resource="0" file="Source/Visualizer.h"/>
   </MAINGROUP>

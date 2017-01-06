@@ -2139,9 +2139,6 @@
     <ClInclude Include="..\..\Source\VCOTuner.h">
       <Filter>VCO Tuner</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\VersionInfo.h">
-      <Filter>VCO Tuner</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\Visualizer.h">
       <Filter>VCO Tuner</Filter>
     </ClInclude>

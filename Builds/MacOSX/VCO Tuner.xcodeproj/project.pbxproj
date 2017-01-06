@@ -806,7 +806,6 @@
 		A19A4CBA0BB3962D33A1D123 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "juce_StretchableObjectResizer.h"; path = "../../JuceLibraryCode/modules/juce_gui_basics/layout/juce_StretchableObjectResizer.h"; sourceTree = "SOURCE_ROOT"; };
 		A19EDB9FA65ADE4ED03844CB = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "juce_linux_Midi.cpp"; path = "../../JuceLibraryCode/modules/juce_audio_devices/native/juce_linux_Midi.cpp"; sourceTree = "SOURCE_ROOT"; };
 		A1B0DF8C1622646AB28AC477 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "juce_EdgeTable.h"; path = "../../JuceLibraryCode/modules/juce_graphics/geometry/juce_EdgeTable.h"; sourceTree = "SOURCE_ROOT"; };
-		A1B63EA752A1DFBE9A5325A6 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VersionInfo.h; path = ../../Source/VersionInfo.h; sourceTree = "SOURCE_ROOT"; };
 		A1C2B7C4964449783DA4CCB3 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "juce_android_Windowing.cpp"; path = "../../JuceLibraryCode/modules/juce_gui_basics/native/juce_android_Windowing.cpp"; sourceTree = "SOURCE_ROOT"; };
 		A1ED49A640210FD42C9779BC = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "juce_HyperlinkButton.h"; path = "../../JuceLibraryCode/modules/juce_gui_basics/buttons/juce_HyperlinkButton.h"; sourceTree = "SOURCE_ROOT"; };
 		A1F35BECAA1B17CF60AA86A0 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "juce_TemporaryFile.cpp"; path = "../../JuceLibraryCode/modules/juce_core/files/juce_TemporaryFile.cpp"; sourceTree = "SOURCE_ROOT"; };
@@ -1279,7 +1278,6 @@
 					C0B943B37166EE6AE884BD09,
 					FE7CCC33D0FC6AD442627D02,
 					3DC41604B6251DCAD59980B2,
-					A1B63EA752A1DFBE9A5325A6,
 					1694EC1B42AC2CCF819373C9,
 					C28B07E955022A0CCDA7B4AC, ); name = "VCO Tuner"; sourceTree = "<group>"; };
 		EBC9CD52F42C330D1A15D3A4 = {isa = PBXGroup; children = (
