@@ -1,6 +1,6 @@
 To compile this on linux, please install the following packages first
 
-$  sudo apt-get install build-essential libxcursor-dev libx11-dev libxinerama-dev libxrandr-dev libfreetype6-dev libjack-dev
+$  sudo apt-get install build-essential libxcursor-dev libx11-dev libxinerama-dev libxrandr-dev libfreetype6-dev libjack-dev libasound2-dev
 
 then execute
 
