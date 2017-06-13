@@ -259,14 +259,14 @@ void MainComponent::showAudioSettings()
             addAndMakeVisible(&selectorComponent);
         }
         
-        void comboBoxChanged (ComboBox* comboBoxThatHasChanged)
+        void comboBoxChanged (ComboBox* comboBoxThatHasChanged) override
         {
             int channel = comboBoxThatHasChanged->getSelectedId();
             t->setMidiChannel(channel);
             getAppProperties().getUserSettings()->setValue("MIDIChannel", channel);
         }
         
-        void resized()
+        void resized() override
         {
             const int height = selectorComponent.getItemHeight();
             const int border = 10;

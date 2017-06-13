@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="NTe0XB0ij" name="VCO Tuner" projectType="guiapp" version="0.2.4"
               juceFolder="../../../juce" vstFolderMac="~/SDKs/vstsdk2.4" vstFolderPC="c:\SDKs\vstsdk2.4"
-              bundleIdentifier="com.johanneselliesen.vcotuner" jucerVersion="4.2.4"
+              bundleIdentifier="com.johanneselliesen.vcotuner" jucerVersion="4.2.1"
               companyName="Johannes Elliesen" includeBinaryInAppConfig="1">
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" vstFolder="" rtasFolder="~/SDKs/PT_80_SDK"
@@ -33,9 +33,9 @@
     <LINUX_MAKE targetFolder="Builds/Linux" vstFolder="" vst3Folder="" extraDefs="">
       <CONFIGURATIONS>
         <CONFIGURATION name="Debug" isDebug="1" optimisation="1" targetName="VCO Tuner"
-                       libraryPath="/usr/X11R6/lib/"/>
+                       libraryPath="/usr/X11R6/lib/" headerPath="/usr/include/freetype2"/>
         <CONFIGURATION name="Release" isDebug="0" optimisation="2" targetName="VCO Tuner"
-                       libraryPath="/usr/X11R6/lib/"/>
+                       libraryPath="/usr/X11R6/lib/" headerPath="/usr/include/freetype2"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_video" path="../Juce/modules"/>

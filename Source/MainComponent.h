@@ -29,16 +29,16 @@ public:
     MainComponent();
     ~MainComponent();
     
-    void resized();
-    void paint(Graphics& g);
+    void resized() override;
+    void paint(Graphics& g) override;
     
-    virtual void buttonClicked (Button* bttn);
-    virtual void comboBoxChanged (ComboBox* comboBoxThatHasChanged);
+    virtual void buttonClicked (Button* bttn) override;
+    virtual void comboBoxChanged (ComboBox* comboBoxThatHasChanged) override;
     
-    virtual void tunerStarted();
-    virtual void tunerStopped();
-    virtual void tunerFinished();
-    virtual void tunerStatusChanged(String statusString);
+    virtual void tunerStarted() override;
+    virtual void tunerStopped() override;
+    virtual void tunerFinished() override;
+    virtual void tunerStatusChanged(String statusString) override;
     
     void startCreatingReport();
     
