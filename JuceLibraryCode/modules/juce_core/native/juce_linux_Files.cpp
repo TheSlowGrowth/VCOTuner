@@ -1,30 +1,31 @@
 /*
   ==============================================================================
 
-   This file is part of the juce_core module of the JUCE library.
-   Copyright (c) 2015 - ROLI Ltd.
+   This file is part of the JUCE library.
+   Copyright (c) 2020 - Raw Material Software Limited
 
-   Permission to use, copy, modify, and/or distribute this software for any purpose with
-   or without fee is hereby granted, provided that the above copyright notice and this
-   permission notice appear in all copies.
+   JUCE is an open source library subject to commercial or open-source
+   licensing.
 
-   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD
-   TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
-   NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
-   DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
-   IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
-   CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+   The code included in this file is provided under the terms of the ISC license
+   http://www.isc.org/downloads/software-support-policy/isc-license. Permission
+   To use, copy, modify, and/or distribute this software for any purpose with or
+   without fee is hereby granted provided that the above copyright notice and
+   this permission notice appear in all copies.
 
-   ------------------------------------------------------------------------------
-
-   NOTE! This permissive ISC license applies ONLY to files within the juce_core module!
-   All other JUCE modules are covered by a dual GPL/commercial license, so if you are
-   using any other modules, be sure to check that you also comply with their license.
-
-   For more details, visit www.juce.com
+   JUCE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY, AND ALL WARRANTIES, WHETHER
+   EXPRESSED OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR PURPOSE, ARE
+   DISCLAIMED.
 
   ==============================================================================
 */
+
+#if JUCE_BSD
+extern char** environ;
+#endif
+
+namespace juce
+{
 
 enum
 {
@@ -39,7 +40,7 @@ bool File::isOnCDRomDrive() const
     struct statfs buf;
 
     return statfs (getFullPathName().toUTF8(), &buf) == 0
-             && buf.f_type == (short) U_ISOFS_SUPER_MAGIC;
+             && buf.f_type == (unsigned int) U_ISOFS_SUPER_MAGIC;
 }
 
 bool File::isOnHardDisk() const
@@ -72,7 +73,7 @@ bool File::isOnRemovableDrive() const
 
 String File::getVersion() const
 {
-    return String(); // xxx not yet implemented
+    return {}; // xxx not yet implemented
 }
 
 //==============================================================================
@@ -112,41 +113,35 @@ File File::getSpecialLocation (const SpecialLocationType type)
             if (const char* homeDir = getenv ("HOME"))
                 return File (CharPointer_UTF8 (homeDir));
 
-            if (struct passwd* const pw = getpwuid (getuid()))
+            if (auto* pw = getpwuid (getuid()))
                 return File (CharPointer_UTF8 (pw->pw_dir));
 
-            return File();
+            return {};
         }
 
-        case userDocumentsDirectory:          return resolveXDGFolder ("XDG_DOCUMENTS_DIR", "~");
-        case userMusicDirectory:              return resolveXDGFolder ("XDG_MUSIC_DIR",     "~");
-        case userMoviesDirectory:             return resolveXDGFolder ("XDG_VIDEOS_DIR",    "~");
-        case userPicturesDirectory:           return resolveXDGFolder ("XDG_PICTURES_DIR",  "~");
+        case userDocumentsDirectory:          return resolveXDGFolder ("XDG_DOCUMENTS_DIR", "~/Documents");
+        case userMusicDirectory:              return resolveXDGFolder ("XDG_MUSIC_DIR",     "~/Music");
+        case userMoviesDirectory:             return resolveXDGFolder ("XDG_VIDEOS_DIR",    "~/Videos");
+        case userPicturesDirectory:           return resolveXDGFolder ("XDG_PICTURES_DIR",  "~/Pictures");
         case userDesktopDirectory:            return resolveXDGFolder ("XDG_DESKTOP_DIR",   "~/Desktop");
-        case userApplicationDataDirectory:    return resolveXDGFolder ("XDG_CONFIG_HOME",   "~");
+        case userApplicationDataDirectory:    return resolveXDGFolder ("XDG_CONFIG_HOME",   "~/.config");
         case commonDocumentsDirectory:
-        case commonApplicationDataDirectory:  return File ("/var");
+        case commonApplicationDataDirectory:  return File ("/opt");
         case globalApplicationsDirectory:     return File ("/usr");
 
         case tempDirectory:
         {
-            File tmp ("/var/tmp");
+            if (const char* tmpDir = getenv ("TMPDIR"))
+                return File (CharPointer_UTF8 (tmpDir));
 
-            if (! tmp.isDirectory())
-            {
-                tmp = "/tmp";
-
-                if (! tmp.isDirectory())
-                    tmp = File::getCurrentWorkingDirectory();
-            }
-
-            return tmp;
+            return File ("/tmp");
         }
 
         case invokedExecutableFile:
             if (juce_argv != nullptr && juce_argc > 0)
-                return File (CharPointer_UTF8 (juce_argv[0]));
-            // deliberate fall-through...
+                return File (String (CharPointer_UTF8 (juce_argv[0])));
+            // Falls through
+            JUCE_FALLTHROUGH
 
         case currentExecutableFile:
         case currentApplicationFile:
@@ -154,11 +149,16 @@ File File::getSpecialLocation (const SpecialLocationType type)
             return juce_getExecutableFile();
            #endif
             // deliberate fall-through if this is not a shared-library
+            JUCE_FALLTHROUGH
 
         case hostApplicationPath:
         {
+           #if JUCE_BSD
+            return juce_getExecutableFile();
+           #else
             const File f ("/proc/self/exe");
             return f.isSymbolicLink() ? f.getLinkedTarget() : juce_getExecutableFile();
+           #endif
         }
 
         default:
@@ -166,7 +166,7 @@ File File::getSpecialLocation (const SpecialLocationType type)
             break;
     }
 
-    return File();
+    return {};
 }
 
 //==============================================================================
@@ -199,29 +199,31 @@ static bool isFileExecutable (const String& filename)
 
 bool Process::openDocument (const String& fileName, const String& parameters)
 {
-    String cmdString (fileName.replace (" ", "\\ ",false));
-    cmdString << " " << parameters;
-
-    if (URL::isProbablyAWebsiteURL (fileName)
-         || cmdString.startsWithIgnoreCase ("file:")
-         || URL::isProbablyAnEmailAddress (fileName)
-         || File::createFileWithoutCheckingPath (fileName).isDirectory()
-         || ! isFileExecutable (fileName))
+    const auto cmdString = [&]
     {
-        // create a command that tries to launch a bunch of likely browsers
-        static const char* const browserNames[] = { "xdg-open", "/etc/alternatives/x-www-browser", "firefox", "mozilla",
-                                                    "google-chrome", "chromium-browser", "opera", "konqueror" };
-        StringArray cmdLines;
+        if (fileName.startsWithIgnoreCase ("file:")
+            || File::createFileWithoutCheckingPath (fileName).isDirectory()
+            || ! isFileExecutable (fileName))
+        {
+            const auto singleCommand = fileName.trim().quoted();
 
-        for (int i = 0; i < numElementsInArray (browserNames); ++i)
-            cmdLines.add (String (browserNames[i]) + " " + cmdString.trim().quoted());
+            StringArray cmdLines;
 
-        cmdString = cmdLines.joinIntoString (" || ");
-    }
+            for (auto browserName : { "xdg-open", "/etc/alternatives/x-www-browser", "firefox", "mozilla",
+                                      "google-chrome", "chromium-browser", "opera", "konqueror" })
+            {
+                cmdLines.add (String (browserName) + " " + singleCommand);
+            }
 
-    const char* const argv[4] = { "/bin/sh", "-c", cmdString.toUTF8(), 0 };
+            return cmdLines.joinIntoString (" || ");
+        }
 
-    const int cpid = fork();
+        return (fileName.replace (" ", "\\ ", false) + " " + parameters).trim();
+    }();
+
+    const char* const argv[] = { "/bin/sh", "-c", cmdString.toUTF8(), nullptr };
+
+    const auto cpid = fork();
 
     if (cpid == 0)
     {
@@ -242,3 +244,5 @@ void File::revealToUser() const
     else if (getParentDirectory().exists())
         getParentDirectory().startAsProcess();
 }
+
+} // namespace juce

@@ -14,10 +14,10 @@
 
 MainComponent::MainComponent() : tuner(&deviceManager), display(&tuner)
 {
-    ScopedPointer<XmlElement> savedAudioState (getAppProperties().getUserSettings()
+    std::unique_ptr<XmlElement> savedAudioState (getAppProperties().getUserSettings()
                                                ->getXmlValue ("audioDeviceState"));
-    
-    deviceManager.initialise (1, 0, savedAudioState, true);
+    //new juce::XmlElement(savedAudioState.get());
+    deviceManager.initialise (1, 0, savedAudioState.get(), true);
     
     setVisible (true);
     
@@ -310,9 +310,9 @@ void MainComponent::showAudioSettings()
     
     o.runModal();
     
-    ScopedPointer<XmlElement> audioState (deviceManager.createStateXml());
+    std::unique_ptr<XmlElement> audioState (deviceManager.createStateXml());
     
-    getAppProperties().getUserSettings()->setValue ("audioDeviceState", audioState);
+    getAppProperties().getUserSettings()->setValue ("audioDeviceState", audioState.get());
     getAppProperties().getUserSettings()->saveIfNeeded();
 }
 

@@ -1,3 +1,5 @@
+#pragma code_page(65001)
+
 #ifdef JUCE_USER_DEFINED_RC_FILE
  #include JUCE_USER_DEFINED_RC_FILE
 #else
@@ -7,17 +9,18 @@
 #include <windows.h>
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION  0,2,4,0
+FILEVERSION  0,3,0,0
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
     BLOCK "040904E4"
     BEGIN
-      VALUE "CompanyName",  "Johannes Elliesen\0"
+      VALUE "CompanyName",  "Johannes Elliesen & Karl Stamm\0"
+      VALUE "LegalCopyright",  "GPL-3\0"
       VALUE "FileDescription",  "VCO Tuner\0"
-      VALUE "FileVersion",  "0.2.4\0"
+      VALUE "FileVersion",  "0.3.0\0"
       VALUE "ProductName",  "VCO Tuner\0"
-      VALUE "ProductVersion",  "0.2.4\0"
+      VALUE "ProductVersion",  "0.3.0\0"
     END
   END
 

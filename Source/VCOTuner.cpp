@@ -114,9 +114,9 @@ void VCOTuner::timerCallback()
             }
             else
             {
-                // after 100ms, we expect the oscillator to be settled at the new pitch
+                // after 120ms, we expect the oscillator to be settled at the new pitch
                 // (gives some safety margin for audio/midi interface latency)
-                if (cycleCounter >= 10)
+                if (cycleCounter >= 12)
                 {
                     // start a measurement and see if we get a stable pitch here
                     startMeasurement = true;
@@ -182,9 +182,9 @@ void VCOTuner::timerCallback()
             }
             else
             {
-                // after 100ms, we expect the oscillator to be settled at the new pitch
+                // after 120ms, we expect the oscillator to be settled at the new pitch
                 // (gives some safety margin for audio/midi interface latency)
-                if (cycleCounter >= 10)
+                if (cycleCounter >= 12)
                 {
                     // start a measurement and see if we get a stable pitch here
                     startMeasurement = true;

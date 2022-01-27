@@ -2,28 +2,29 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2015 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
-   Permission is granted to use this software under the terms of either:
-   a) the GPL v2 (or any later version)
-   b) the Affero GPL v3
+   JUCE is an open source library subject to commercial or open-source
+   licensing.
 
-   Details of these licenses can be found at: www.gnu.org/licenses
+   By using JUCE, you agree to the terms of both the JUCE 6 End-User License
+   Agreement and JUCE Privacy Policy (both effective as of the 16th June 2020).
 
-   JUCE is distributed in the hope that it will be useful, but WITHOUT ANY
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-   A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+   End User License Agreement: www.juce.com/juce-6-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
 
-   ------------------------------------------------------------------------------
+   Or: You may also use this code under the terms of the GPL v3 (see
+   www.gnu.org/licenses).
 
-   To release a closed-source product which uses JUCE, commercial licenses are
-   available: visit www.juce.com for more information.
+   JUCE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY, AND ALL WARRANTIES, WHETHER
+   EXPRESSED OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR PURPOSE, ARE
+   DISCLAIMED.
 
   ==============================================================================
 */
 
-#ifndef JUCE_MULTIDOCUMENTPANEL_H_INCLUDED
-#define JUCE_MULTIDOCUMENTPANEL_H_INCLUDED
+namespace juce
+{
 
 class MultiDocumentPanel;
 
@@ -37,6 +38,8 @@ class MultiDocumentPanel;
     everything works nicely inside a MultiDocumentPanel.
 
     @see MultiDocumentPanel
+
+    @tags{GUI}
 */
 class JUCE_API  MultiDocumentPanelWindow  : public DocumentWindow
 {
@@ -47,7 +50,7 @@ public:
     MultiDocumentPanelWindow (Colour backgroundColour);
 
     /** Destructor. */
-    ~MultiDocumentPanelWindow();
+    ~MultiDocumentPanelWindow() override;
 
     //==============================================================================
     /** @internal */
@@ -79,6 +82,8 @@ private:
     Use addDocument() and closeDocument() to add or remove components from the
     panel - never use any of the Component methods to access the panel's child
     components directly, as these are managed internally.
+
+    @tags{GUI}
 */
 class JUCE_API  MultiDocumentPanel  : public Component,
                                       private ComponentListener
@@ -95,14 +100,16 @@ public:
 
     /** Destructor.
 
-        When deleted, this will call closeAllDocuments (false) to make sure all its
+        When deleted, this will call close all open documents to make sure all its
         components are deleted. If you need to make sure all documents are saved
-        before closing, then you should call closeAllDocuments (true) and check that
-        it returns true before deleting the panel.
+        before closing, then you should call closeAllDocumentsAsync() with
+        checkItsOkToCloseFirst == true and check the provided callback result is true
+        before deleting the panel.
     */
-    ~MultiDocumentPanel();
+    ~MultiDocumentPanel() override;
 
     //==============================================================================
+   #if JUCE_MODAL_LOOPS_PERMITTED
     /** Tries to close all the documents.
 
         If checkItsOkToCloseFirst is true, then the tryToCloseDocument() method will
@@ -115,6 +122,22 @@ public:
         @see closeDocument
     */
     bool closeAllDocuments (bool checkItsOkToCloseFirst);
+   #endif
+
+    /** Tries to close all the documents.
+
+        If checkItsOkToCloseFirst is true, then the tryToCloseDocumentAsync() method will
+        be called for each open document, and any of these calls fails, this method
+        will stop and provide an argument of false to the callback, leaving some documents
+        still open.
+
+        If checkItsOkToCloseFirst is false, then all documents will be closed
+        unconditionally.
+
+        @see closeDocumentAsync
+    */
+    void closeAllDocumentsAsync (bool checkItsOkToCloseFirst,
+                                 std::function<void (bool)> callback);
 
     /** Adds a document component to the panel.
 
@@ -129,14 +152,15 @@ public:
         @param component            the component to add
         @param backgroundColour     the background colour to use to fill the component's
                                     window or tab
-        @param deleteWhenRemoved    if true, then when the component is removed by closeDocument()
-                                    or closeAllDocuments(), then it will be deleted. If false, then
+        @param deleteWhenRemoved    if true, then when the component is removed by closeDocumentAsync()
+                                    or closeAllDocumentsAsync(), then it will be deleted. If false, then
                                     the caller must handle the component's deletion
     */
     bool addDocument (Component* component,
                       Colour backgroundColour,
                       bool deleteWhenRemoved);
 
+   #if JUCE_MODAL_LOOPS_PERMITTED
     /** Closes one of the documents.
 
         If checkItsOkToCloseFirst is true, then the tryToCloseDocument() method will
@@ -153,6 +177,25 @@ public:
     */
     bool closeDocument (Component* component,
                         bool checkItsOkToCloseFirst);
+   #endif
+
+    /** Closes one of the documents.
+
+        If checkItsOkToCloseFirst is true, then the tryToCloseDocumentAsync() method will
+        be called, and if it fails, this method will call the callback with a false
+        argument without closing the document.
+
+        If checkItsOkToCloseFirst is false, then the documents will be closed
+        unconditionally.
+
+        The component will be deleted if the deleteWhenRemoved parameter was set to
+        true when it was added with addDocument.
+
+        @see addDocument, closeAllDocumentsAsync
+    */
+    void closeDocumentAsync (Component* component,
+                             bool checkItsOkToCloseFirst,
+                             std::function<void (bool)> callback);
 
     /** Returns the number of open document windows.
 
@@ -240,9 +283,10 @@ public:
     Colour getBackgroundColour() const noexcept                         { return backgroundColour; }
 
     /** If the panel is being used in tabbed mode, this returns the TabbedComponent that's involved. */
-    TabbedComponent* getCurrentTabbedComponent() const noexcept         { return tabComponent; }
+    TabbedComponent* getCurrentTabbedComponent() const noexcept         { return tabComponent.get(); }
 
     //==============================================================================
+   #if JUCE_MODAL_LOOPS_PERMITTED
     /** A subclass must override this to say whether its currently ok for a document
         to be closed.
 
@@ -264,7 +308,32 @@ public:
 
         @see closeDocument, FileBasedDocument::saveIfNeededAndUserAgrees()
     */
-    virtual bool tryToCloseDocument (Component* component) = 0;
+    virtual bool tryToCloseDocument (Component* component);
+   #endif
+
+    /** A subclass must override this to say whether its currently ok for a document
+        to be closed.
+
+        This method is called by closeDocumentAsync() and closeAllDocumentsAsync()
+        to indicate that a document should be saved if possible, ready for it to be closed.
+
+        If the callback is called with a true argument, then it means the document is ok
+        and can be closed.
+
+        If the callback is called with a false argument, then it means that the
+        closeDocumentAsync() method should stop and not close.
+
+        Normally, you'd use this method to ask the user if they want to save any changes,
+        then return true if the save operation went ok. If the user cancelled the save
+        operation you could give a value of false to the callback to abort the close operation.
+
+        If your component is based on the FileBasedDocument class, then you'd probably want
+        to call FileBasedDocument::saveIfNeededAndUserAgreesAsync() and call the calback with
+        true if this returned FileBasedDocument::savedOk.
+
+        @see closeDocumentAsync, FileBasedDocument::saveIfNeededAndUserAgreesAsync()
+    */
+    virtual void tryToCloseDocumentAsync (Component* component, std::function<void (bool)> callback) = 0;
 
     /** Creates a new window to be used for a document.
 
@@ -283,22 +352,26 @@ public:
 
 private:
     //==============================================================================
-    LayoutMode mode;
-    Array <Component*> components;
-    ScopedPointer<TabbedComponent> tabComponent;
-    Colour backgroundColour;
-    int maximumNumDocuments, numDocsBeforeTabsUsed;
+    void closeDocumentInternal (Component*);
+    static void closeLastDocumentRecursive (SafePointer<MultiDocumentPanel>,
+                                            bool,
+                                            std::function<void (bool)>);
 
-    class TabbedComponentInternal;
+    //==============================================================================
+    struct TabbedComponentInternal;
     friend class MultiDocumentPanelWindow;
-    friend class TabbedComponentInternal;
 
     Component* getContainerComp (Component*) const;
     void updateOrder();
     void addWindow (Component*);
 
+    LayoutMode mode = MaximisedWindowsWithTabs;
+    Array<Component*> components;
+    std::unique_ptr<TabbedComponent> tabComponent;
+    Colour backgroundColour { Colours::lightblue };
+    int maximumNumDocuments = 0, numDocsBeforeTabsUsed = 0;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MultiDocumentPanel)
 };
 
-
-#endif   // JUCE_MULTIDOCUMENTPANEL_H_INCLUDED
+} // namespace juce

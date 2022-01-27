@@ -2,35 +2,37 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2015 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
-   Permission is granted to use this software under the terms of either:
-   a) the GPL v2 (or any later version)
-   b) the Affero GPL v3
+   JUCE is an open source library subject to commercial or open-source
+   licensing.
 
-   Details of these licenses can be found at: www.gnu.org/licenses
+   By using JUCE, you agree to the terms of both the JUCE 6 End-User License
+   Agreement and JUCE Privacy Policy (both effective as of the 16th June 2020).
 
-   JUCE is distributed in the hope that it will be useful, but WITHOUT ANY
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-   A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+   End User License Agreement: www.juce.com/juce-6-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
 
-   ------------------------------------------------------------------------------
+   Or: You may also use this code under the terms of the GPL v3 (see
+   www.gnu.org/licenses).
 
-   To release a closed-source product which uses JUCE, commercial licenses are
-   available: visit www.juce.com for more information.
+   JUCE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY, AND ALL WARRANTIES, WHETHER
+   EXPRESSED OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR PURPOSE, ARE
+   DISCLAIMED.
 
   ==============================================================================
 */
 
-#ifndef JUCE_EDGETABLE_H_INCLUDED
-#define JUCE_EDGETABLE_H_INCLUDED
-
+namespace juce
+{
 
 //==============================================================================
 /**
     A table of horizontal scan-line segments - used for rasterising Paths.
 
     @see Path, Graphics
+
+    @tags{Graphics}
 */
 class JUCE_API  EdgeTable
 {
@@ -45,21 +47,21 @@ public:
         @param pathToAdd                the path to add to the table
         @param transform                a transform to apply to the path being added
     */
-    EdgeTable (const Rectangle<int>& clipLimits,
+    EdgeTable (Rectangle<int> clipLimits,
                const Path& pathToAdd,
                const AffineTransform& transform);
 
     /** Creates an edge table containing a rectangle. */
-    explicit EdgeTable (const Rectangle<int>& rectangleToAdd);
+    explicit EdgeTable (Rectangle<int> rectangleToAdd);
+
+    /** Creates an edge table containing a rectangle. */
+    explicit EdgeTable (Rectangle<float> rectangleToAdd);
 
     /** Creates an edge table containing a rectangle list. */
     explicit EdgeTable (const RectangleList<int>& rectanglesToAdd);
 
     /** Creates an edge table containing a rectangle list. */
     explicit EdgeTable (const RectangleList<float>& rectanglesToAdd);
-
-    /** Creates an edge table containing a rectangle. */
-    explicit EdgeTable (const Rectangle<float>& rectangleToAdd);
 
     /** Creates a copy of another edge table. */
     EdgeTable (const EdgeTable&);
@@ -71,8 +73,8 @@ public:
     ~EdgeTable();
 
     //==============================================================================
-    void clipToRectangle (const Rectangle<int>& r);
-    void excludeRectangle (const Rectangle<int>& r);
+    void clipToRectangle (Rectangle<int> r);
+    void excludeRectangle (Rectangle<int> r);
     void clipToEdgeTable (const EdgeTable&);
     void clipLineToMask (int x, int y, const uint8* mask, int maskStride, int numPixels);
     bool isEmpty() noexcept;
@@ -120,7 +122,7 @@ public:
             if (--numPoints > 0)
             {
                 int x = *++line;
-                jassert ((x >> 8) >= bounds.getX() && (x >> 8) < bounds.getRight());
+                jassert ((x / scale) >= bounds.getX() && (x / scale) < bounds.getRight());
                 int levelAccumulator = 0;
 
                 iterationCallback.setEdgeTableYPos (bounds.getY() + y);
@@ -128,12 +130,12 @@ public:
                 while (--numPoints >= 0)
                 {
                     const int level = *++line;
-                    jassert (isPositiveAndBelow (level, (int) 256));
+                    jassert (isPositiveAndBelow (level, scale));
                     const int endX = *++line;
                     jassert (endX >= x);
-                    const int endOfRun = (endX >> 8);
+                    const int endOfRun = (endX / scale);
 
-                    if (endOfRun == (x >> 8))
+                    if (endOfRun == (x / scale))
                     {
                         // small segment within the same pixel, so just save it for the next
                         // time round..
@@ -144,8 +146,8 @@ public:
                         // plot the fist pixel of this segment, including any accumulated
                         // levels from smaller segments that haven't been drawn yet
                         levelAccumulator += (0x100 - (x & 0xff)) * level;
-                        levelAccumulator >>= 8;
-                        x >>= 8;
+                        levelAccumulator /= scale;
+                        x /= scale;
 
                         if (levelAccumulator > 0)
                         {
@@ -172,11 +174,11 @@ public:
                     x = endX;
                 }
 
-                levelAccumulator >>= 8;
+                levelAccumulator /= scale;
 
                 if (levelAccumulator > 0)
                 {
-                    x >>= 8;
+                    x /= scale;
                     jassert (x >= bounds.getX() && x < bounds.getRight());
 
                     if (levelAccumulator >= 255)
@@ -190,6 +192,10 @@ public:
 
 private:
     //==============================================================================
+    static constexpr auto defaultEdgesPerLine = 32;
+    static constexpr auto scale = 256;
+
+    //==============================================================================
     // table line format: number of points; point0 x, point0 levelDelta, point1 x, point1 levelDelta, etc
     struct LineItem
     {
@@ -201,13 +207,14 @@ private:
     HeapBlock<int> table;
     Rectangle<int> bounds;
     int maxEdgesPerLine, lineStrideElements;
-    bool needToCheckEmptiness;
+    bool needToCheckEmptiness = true;
 
     void allocate();
     void clearLineSizes() noexcept;
     void addEdgePoint (int x, int y, int winding);
     void addEdgePointPair (int x1, int x2, int y, int winding);
     void remapTableForNumEdges (int newNumEdgesPerLine);
+    void remapWithExtraSpace (int numPointsNeeded);
     void intersectWithEdgeTableLine (int y, const int* otherLine);
     void clipEdgeTableLineToRange (int* line, int x1, int x2) noexcept;
     void sanitiseLevels (bool useNonZeroWinding) noexcept;
@@ -216,5 +223,4 @@ private:
     JUCE_LEAK_DETECTOR (EdgeTable)
 };
 
-
-#endif   // JUCE_EDGETABLE_H_INCLUDED
+} // namespace juce
