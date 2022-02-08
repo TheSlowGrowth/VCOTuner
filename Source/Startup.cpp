@@ -40,19 +40,19 @@ public:
         options.filenameSuffix      = "settings";
         options.osxLibrarySubFolder = "Application Support";
 
-        appProperties = new ApplicationProperties();
+        appProperties.reset(new ApplicationProperties());
         appProperties->setStorageParameters (options);
 
         LookAndFeel::setDefaultLookAndFeel (&lookAndFeel);
 
-        mainWindow = new MainWindow();
+        mainWindow.reset(new MainWindow());
         mainWindow->setUsingNativeTitleBar (true);
     }
 
     void shutdown() override
     {
-        mainWindow = nullptr;
-        appProperties = nullptr;
+        mainWindow.reset();
+        appProperties.reset();
         LookAndFeel::setDefaultLookAndFeel (nullptr);
     }
 
@@ -69,11 +69,11 @@ public:
     bool moreThanOneInstanceAllowed() override       { return true; }
 
     ApplicationCommandManager commandManager;
-    ScopedPointer<ApplicationProperties> appProperties;
+    std::unique_ptr<ApplicationProperties> appProperties;
     LookAndFeel_V3 lookAndFeel;
 
 private:
-    ScopedPointer<MainWindow> mainWindow;
+    std::unique_ptr<MainWindow> mainWindow;
 };
 
 static VCOTunerApp& getApp()                      { return *dynamic_cast<VCOTunerApp*>(JUCEApplication::getInstance()); }

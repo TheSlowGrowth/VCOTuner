@@ -14,10 +14,10 @@
 
 MainComponent::MainComponent() : tuner(&deviceManager), display(&tuner)
 {
-    ScopedPointer<XmlElement> savedAudioState (getAppProperties().getUserSettings()
+    std::unique_ptr<XmlElement> savedAudioState (getAppProperties().getUserSettings()
                                                ->getXmlValue ("audioDeviceState"));
     
-    deviceManager.initialise (1, 0, savedAudioState, true);
+    deviceManager.initialise (1, 0, savedAudioState.get(), true);
     
     setVisible (true);
     
@@ -231,10 +231,10 @@ void MainComponent::showAudioSettings()
                                     public TextButton::Listener
     {
     public:
-        SettingsWrapperComponent(VCOTuner* tuner, AudioDeviceManager& m)
+        SettingsWrapperComponent(VCOTuner* tunerToUse, juce::AudioDeviceManager& m)
         : selectorComponent(m, 1, 1, 0, 0, false, true, false, false)
         {
-            t = tuner;
+            t = tunerToUse;
             
             channelLabel.setName("MidiChannel Label");
             channelLabel.setText("MIDI Channel: ", dontSendNotification);
@@ -310,9 +310,9 @@ void MainComponent::showAudioSettings()
     
     o.runModal();
     
-    ScopedPointer<XmlElement> audioState (deviceManager.createStateXml());
+    std::unique_ptr<XmlElement> audioState (deviceManager.createStateXml());
     
-    getAppProperties().getUserSettings()->setValue ("audioDeviceState", audioState);
+    getAppProperties().getUserSettings()->setValue ("audioDeviceState", audioState.get());
     getAppProperties().getUserSettings()->saveIfNeeded();
 }
 

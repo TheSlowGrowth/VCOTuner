@@ -25,7 +25,7 @@ class ReportCreatorWindow: public Component
 {
 public:
     ReportCreatorWindow(VCOTuner* t, Visualizer* v);
-    virtual ~ReportCreatorWindow();
+    virtual ~ReportCreatorWindow() override;
     
     // switches to the next dialog
     void next();

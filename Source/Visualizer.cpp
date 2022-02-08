@@ -108,21 +108,21 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
     int numNegLines = (int) trunc(-min/lineInterval);
     for (double y = numPosLines; y > -numNegLines; y--)
     {
-        double position = (y*lineInterval - min) * vertScaling;
+        double linePos = (y*lineInterval - min) * vertScaling;
         double left = sidebarWidth - 2;
         double number = y*lineInterval*((useSemitoneTexts)?1.0:100.0);
         String numberString = (std::abs(number - round(number)) > 0.1)?String(number, 1):String((int)round(number));
         String lineText = numberString;
         if (!useSemitoneTexts)
             lineText += " cents";
-        g.drawText(lineText, 0, (int) yFlip(position + g.getCurrentFont().getHeight()/2), (int) left-4, g.getCurrentFont().getHeight(), Justification::centredRight);
+        g.drawText(lineText, juce::Rectangle<float>(0.0f, yFlip(float(linePos) + g.getCurrentFont().getHeight()/2.0f), float(left) - 4, g.getCurrentFont().getHeight()), Justification::centredRight);
         
         // don't overwrite maximum "in-tune" lines
         if (y*lineInterval == allowedPitchOffset || y*lineInterval == -allowedPitchOffset)
             continue;
         
-        const float dashLengths[] = {4, 20};
-        g.drawDashedLine(Line<float>((float) left, yFlip((float) position), (float) width, yFlip((float) position)), dashLengths, 2);
+        const float lineDashLengths[] = {4, 20};
+        g.drawDashedLine(Line<float>((float) left, yFlip((float) linePos), (float) width, yFlip((float) linePos)), lineDashLengths, 2);
         
     }
     
@@ -139,14 +139,14 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
         g.fillRect(left, yFlip(maxPosition), (float) columnWidth, maxPosition - minPosition);
         
         // draw average value
-        float position = (float) ((measurements[i].pitchOffset - min) * vertScaling);
+        float pointPosition = (float) ((measurements[i].pitchOffset - min) * vertScaling);
         g.setColour(Colours::green);
-        g.drawLine(left, yFlip(position), left + (float) columnWidth, yFlip(position));
+        g.drawLine(left, yFlip(pointPosition), left + (float) columnWidth, yFlip(pointPosition));
     }
     
     // draw the X-Axis label
     g.setColour(Colours::black);
-    g.drawText("MIDI note", 0, imageHeight, sidebarWidth - 10, bottomBarHeight, Justification::centredRight);
+    g.drawText("MIDI note", 0, imageHeight, juce::roundToInt(sidebarWidth) - 10, bottomBarHeight, Justification::centredRight);
     
     // draw the corresponding note values to the X axis
     const int numPitchTextIntervals = 5;
@@ -178,10 +178,10 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
     {
         g.setColour(Colours::black);
         float textWidth = g.getCurrentFont().getStringWidth(String(measurements[i].midiPitch));
-        float left = sidebarWidth + i * columnWidth;
-        float x = left + columnWidth/2 - textWidth/2;
+        float left = sidebarWidth + i * float(columnWidth);
+        float x = left + float(columnWidth)/2.0f - textWidth/2.0f;
         float y = imageHeight;
-        g.drawText(String(measurements[i].midiPitch), x, y, textWidth, bottomBarHeight, Justification::centred);
+        g.drawText(String(measurements[i].midiPitch), juce::Rectangle<float>(x, y, textWidth, bottomBarHeight), Justification::centred);
         
         // the line for the reference pitch will be drawn later
         if (measurements[i].midiPitch == tuner->getReferencePitch())
@@ -191,14 +191,14 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
         if (pitchTextInterval >= 2)
         {
             g.setColour(Colours::blue.withAlpha(0.05f));
-            g.fillRect(Rectangle<float>(left, 0, columnWidth, imageHeight));
+            g.fillRect(Rectangle<float>(left, 0, float(columnWidth), imageHeight));
         }
         if (pitchTextInterval == 1 && columnWidth < g.getCurrentFont().getStringWidth("123."))
         {
             if (i % 2 == 0)
             {
                 g.setColour(Colours::blue.withAlpha(0.05f));
-                g.fillRect(Rectangle<float>(left, 0, columnWidth, imageHeight));
+                g.fillRect(Rectangle<float>(left, 0, float(columnWidth), imageHeight));
             }
         }
     }
@@ -211,9 +211,9 @@ void Visualizer::paintWithFixedScaling(Graphics& g, int width, int height, doubl
         {
             if (measurements[i].midiPitch == tuner->getReferencePitch())
             {
-                float left = sidebarWidth + i * columnWidth;
+                float left = sidebarWidth + i * float(columnWidth);
                 g.setColour(Colours::blue.withAlpha(0.15f));
-                g.fillRect(Rectangle<float>(left, 0, columnWidth, imageHeight));
+                g.fillRect(Rectangle<float>(left, 0, float(columnWidth), imageHeight));
             }
         }
     }

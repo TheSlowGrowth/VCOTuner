@@ -149,7 +149,7 @@ void VCOTuner::timerCallback()
                     
                     double averagePeriod = accumulator / (double) numMeasurements;
                     
-                    referenceFrequency = sampleRate / averagePeriod;
+                    referenceFrequency = float(sampleRate / averagePeriod);
                     
                     // prepare next measurement
                     currentPitch = lowestPitch;
@@ -268,10 +268,10 @@ void VCOTuner::timerCallback()
                 }
             }
             
-            float expectedFrequency = referenceFrequency * pow(2,((float) currentPitch - (float) referencePitch)/12.0);
-            float expectedTime = 1.0 / (float) expectedFrequency * numPeriodSamples;
+            float expectedFrequency = referenceFrequency * powf(2,((float) currentPitch - (float) referencePitch)/12.0f);
+            float expectedTime = 1.0f / (float) expectedFrequency * numPeriodSamples;
             expectedTime *= 2;
-            int expectedCycles = expectedTime * 100;
+            int expectedCycles = juce::roundToInt(expectedTime * 100);
             if (cycleCounter > expectedCycles)
             {
                 if (periodLengthsHead == 0)

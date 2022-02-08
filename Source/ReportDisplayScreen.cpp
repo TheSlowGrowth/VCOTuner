@@ -46,9 +46,9 @@ void ReportDisplayScreen::buttonClicked (Button* bttn)
     {
         // store as an image file (don't use native file chooser for linux - it crashes on some systems)
 #ifdef JUCE_LINUX
-        FileChooser fileChooser("Save report ... ", File::nonexistent, "*.png", false);
+        FileChooser fileChooser("Save report ... ", File(), "*.png", false);
 #else
-        FileChooser fileChooser("Save report ... ", File::nonexistent, "*.png", true);
+        FileChooser fileChooser("Save report ... ", File(), "*.png", true);
 #endif
         if (fileChooser.browseForFileToSave(true))
         {
@@ -140,7 +140,7 @@ void ReportDisplayScreen::drawReport()
     
     g.drawText("Notes:", rightColumnLabels, Justification::topLeft);
     Rectangle<int> noteArea = rightColumnContent.withHeight(lineHeight + contentHeight);
-    g.drawMultiLineText(notes, noteArea.getX(), noteArea.getY() + g.getCurrentFont().getHeight(), noteArea.getWidth());
+    g.drawMultiLineText(notes, noteArea.getX(), noteArea.getY() + juce::roundToInt(g.getCurrentFont().getHeight()), noteArea.getWidth());
     
     g.saveState();
     int bottom = jmax(leftColumnLabels.getBottom(), leftColumnContent.getBottom(),

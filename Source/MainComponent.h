@@ -27,7 +27,7 @@ class MainComponent: public Component,
 {
 public:
     MainComponent();
-    ~MainComponent();
+    virtual ~MainComponent() override;
     
     void resized() override;
     void paint(Graphics& g) override;

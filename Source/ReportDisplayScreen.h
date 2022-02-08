@@ -18,7 +18,7 @@ class ReportDisplayScreen: public Component,
 {
 public:
     ReportDisplayScreen(VCOTuner* t, Visualizer* v, ReportCreatorWindow* parent);
-    ~ReportDisplayScreen();
+    virtual ~ReportDisplayScreen() override;
     
     void buttonClicked (Button* bttn) override;
     void resized() override;

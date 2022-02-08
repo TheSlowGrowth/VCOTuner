@@ -27,7 +27,7 @@ class ReportDetailsEditorScreen: public Component,
 {
 public:
     ReportDetailsEditorScreen(VCOTuner* t, Visualizer* v, ReportCreatorWindow* p);
-    ~ReportDetailsEditorScreen();
+    virtual ~ReportDetailsEditorScreen() override;
     
     void buttonClicked (Button* bttn) override;
     void resized() override;
@@ -67,7 +67,6 @@ private:
         measuring,
         reMeasuringReference
     } state;
-    double initalReferenceFreq;
     
     JUCE_DECLARE_NON_COPYABLE(ReportDetailsEditorScreen)
 };

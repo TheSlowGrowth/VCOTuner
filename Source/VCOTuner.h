@@ -90,7 +90,7 @@ public:
         virtual void tunerStarted() {}
         virtual void tunerStopped() {}
         virtual void tunerFinished() {}
-        virtual void tunerStatusChanged(String statusString) {}
+        virtual void tunerStatusChanged(String /* statusString */) {}
     };
     
     void addListener(Listener* l);
