@@ -38,6 +38,7 @@ juce_add_gui_app(VCOTuner
     # ICON_SMALL ...
     # DOCUMENT_EXTENSIONS ...           # Specify file extensions that should be associated with this app
     # COMPANY_NAME ...                  # Specify the name of the app's author
+    MICROPHONE_PERMISSION_ENABLED TRUE
     PRODUCT_NAME "VCOTuner")      # The name of the final executable, which can differ from the target name
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
