@@ -21,7 +21,7 @@ class ReportPrepScreen: public Component,
 {
 public:
     ReportPrepScreen(VCOTuner* t, Visualizer* v, ReportCreatorWindow* p);
-    ~ReportPrepScreen();
+    virtual ~ReportPrepScreen() override;
     
     void timerCallback() override;
     void paint(Graphics& g) override;

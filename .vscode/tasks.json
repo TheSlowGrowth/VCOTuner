@@ -1,0 +1,131 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Configure (Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "windows": {
+                "command": "cmake.exe",
+                "args": [
+                    "-D",
+                    "CMAKE_BUILD_TYPE=Debug",
+                    "-S",
+                    ".",
+                    "-B",
+                    "build",
+                    "-D",
+                    "CMAKE_EXPORT_COMPILE_COMMANDS=1",
+                    "-G",
+                    "\\\"Visual Studio 16 2019\\\""
+                ],
+            },
+            "osx": {
+                "args": [
+                    "-D",
+                    "CMAKE_BUILD_TYPE=Debug",
+                    "-S",
+                    ".",
+                    "-B",
+                    "build",
+                    "-D",
+                    "CMAKE_EXPORT_COMPILE_COMMANDS=1",
+                    "-G",
+                    "\"Xcode\"",
+                    "-D",
+                    "CMAKE_OSX_ARCHITECTURES=\"arm64;x86_64\""
+                ],
+            },
+            "linux": {
+                "args": [
+                    "-D",
+                    "CMAKE_BUILD_TYPE=Debug",
+                    "-S",
+                    ".",
+                    "-B",
+                    "build",
+                    "-D",
+                    "CMAKE_EXPORT_COMPILE_COMMANDS=1",
+                    "-G",
+                    "\"Unix Makefiles\""
+                ],
+            },
+            "group": "build",
+        },
+        {
+            "label": "Configure (Release)",
+            "type": "shell",
+            "command": "cmake",
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "windows": {
+                "command": "cmake.exe",
+                "args": [
+                    "-D",
+                    "CMAKE_BUILD_TYPE=Release",
+                    "-S",
+                    ".",
+                    "-B",
+                    "build",
+                    "-D",
+                    "CMAKE_EXPORT_COMPILE_COMMANDS=1",
+                    "-G",
+                    "\\\"Visual Studio 16 2019\\\""
+                ],
+            },
+            "osx": {
+                "args": [
+                    "-D",
+                    "CMAKE_BUILD_TYPE=Release",
+                    "-S",
+                    ".",
+                    "-B",
+                    "build",
+                    "-D",
+                    "CMAKE_EXPORT_COMPILE_COMMANDS=1",
+                    "-G",
+                    "\"Xcode\"",
+                    "-D",
+                    "CMAKE_OSX_ARCHITECTURES=\"arm64;x86_64\""
+                ],
+            },
+            "linux": {
+                "args": [
+                    "-D",
+                    "CMAKE_BUILD_TYPE=Release",
+                    "-S",
+                    ".",
+                    "-B",
+                    "build",
+                    "-D",
+                    "CMAKE_EXPORT_COMPILE_COMMANDS=1",
+                    "-G",
+                    "\"Unix Makefiles\""
+                ],
+            },
+            "group": "build",
+        },
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}
